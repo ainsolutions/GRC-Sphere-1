@@ -1,0 +1,6 @@
+    const response = await openai.responses.create({
+      prompt: {
+        "id": "pmpt_68c309c89a7c8193ab0235aef1e8d592016e56bd4aee5d46",
+        "version": "1"
+      }
+    });

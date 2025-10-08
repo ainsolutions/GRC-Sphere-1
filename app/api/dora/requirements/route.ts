@@ -1,0 +1,104 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { withContext, HttpSessionContext } from "@/lib/HttpContext"
+
+export const GET = withContext(async ({ tenantDb }: HttpSessionContext, request) => {
+  try {
+    const requirements = await tenantDb`
+      SELECT *
+      FROM dora_requirements
+      ORDER BY domain, control_id
+    `
+
+    return NextResponse.json(requirements)
+  } catch (error) {
+    console.error("Error fetching DORA requirements:", error)
+    return NextResponse.json({ error: "Failed to fetch DORA requirements" }, { status: 500 })
+  }
+});
+
+export const POST = withContext(async ({ tenantDb }: HttpSessionContext, request) => {
+  try {
+    const body = await request.json()
+    const { domain, control_id, control_name, description, control_type, maturity_level, implementation_guidance } =
+      body
+
+    if (!domain || !control_id || !control_name || !description) {
+      return NextResponse.json(
+        { error: "Domain, control ID, control name, and description are required" },
+        { status: 400 },
+      )
+    }
+
+    const result = await tenantDb`
+      INSERT INTO dora_requirements (
+        domain,
+        control_id,
+        control_name,
+        description,
+        control_type,
+        maturity_level,
+        implementation_guidance
+      ) VALUES (
+        ${domain},
+        ${control_id},
+        ${control_name},
+        ${description},
+        ${control_type || "Mandatory"},
+        ${maturity_level || "Basic"},
+        ${implementation_guidance || ""}
+      )
+      RETURNING *
+    ` as Record<string, any>[]
+
+    return NextResponse.json(result[0], { status: 201 })
+  } catch (error) {
+    console.error("Error creating DORA requirement:", error)
+    return NextResponse.json({ error: "Failed to create DORA requirement" }, { status: 500 })
+  }
+});
+
+export const PUT = withContext(async ({ tenantDb }: HttpSessionContext, request) => {
+  try {
+    const body = await request.json()
+    const {
+      id,
+      domain,
+      control_id,
+      control_name,
+      description,
+      control_type,
+      maturity_level,
+      status,
+      implementation_guidance,
+    } = body
+
+    if (!id) {
+      return NextResponse.json({ error: "Requirement ID is required" }, { status: 400 })
+    }
+
+    const result = await tenantDb`
+      UPDATE dora_requirements 
+      SET 
+        domain = ${domain},
+        control_id = ${control_id},
+        control_name = ${control_name},
+        description = ${description},
+        control_type = ${control_type},
+        maturity_level = ${maturity_level},
+        status = ${status},
+        implementation_guidance = ${implementation_guidance},
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    ` as Record<string, any>[]
+
+    if (result.length === 0) {
+      return NextResponse.json({ error: "Requirement not found" }, { status: 404 })
+    }
+
+    return NextResponse.json(result[0])
+  } catch (error) {
+    console.error("Error updating DORA requirement:", error)
+    return NextResponse.json({ error: "Failed to update DORA requirement" }, { status: 500 })
+  }
+});

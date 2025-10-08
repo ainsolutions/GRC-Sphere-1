@@ -1,0 +1,8 @@
+-- CREATE TABLE sessions (
+--   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   user_id INTEGER NOT NULL,
+--   token TEXT UNIQUE NOT NULL,
+--   created_at TIMESTAMP DEFAULT NOW(),
+--   expires_at TIMESTAMP NOT NULL
+--   session_data TEXT NOT NULL
+-- );

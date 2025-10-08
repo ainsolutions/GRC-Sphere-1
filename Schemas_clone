@@ -1,0 +1,62 @@
+BEGIN;
+
+-- 1) Ensure target schema exists
+CREATE SCHEMA IF NOT EXISTS org_mashreqbank;
+
+-- 2) Move partitions first (child tables), then regular/parent tables
+DO $$
+DECLARE
+  src_schema    text := 'public';
+  target_schema text := 'org_mashreqbank';
+  r             record;
+BEGIN
+  -- Move child partitions first
+  FOR r IN
+    SELECT c.relname
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = src_schema
+      AND c.relkind = 'r'  -- ordinary table
+      AND c.relispartition = true
+  LOOP
+    IF to_regclass(format('%I.%I', target_schema, r.relname)) IS NULL THEN
+      EXECUTE format('ALTER TABLE %I.%I SET SCHEMA %I;', src_schema, r.relname, target_schema);
+    ELSE
+      RAISE NOTICE 'Skipping partition %, already exists in %', r.relname, target_schema;
+    END IF;
+  END LOOP;
+
+  -- Move regular tables and partitioned parents
+  FOR r IN
+    SELECT c.relname
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = src_schema
+      AND c.relkind IN ('r','p')  -- 'r' = ordinary, 'p' = partitioned parent
+      AND (c.relispartition = false OR c.relispartition IS NULL)
+  LOOP
+    IF to_regclass(format('%I.%I', target_schema, r.relname)) IS NULL THEN
+      EXECUTE format('ALTER TABLE %I.%I SET SCHEMA %I;', src_schema, r.relname, target_schema);
+    ELSE
+      RAISE NOTICE 'Skipping table %, already exists in %', r.relname, target_schema;
+    END IF;
+  END LOOP;
+
+  -- 3) Move sequences (including those backing SERIAL/IDENTITY columns)
+  FOR r IN
+    SELECT c.relname
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = src_schema
+      AND c.relkind = 'S'  -- sequences
+  LOOP
+    IF to_regclass(format('%I.%I', target_schema, r.relname)) IS NULL THEN
+      EXECUTE format('ALTER SEQUENCE %I.%I SET SCHEMA %I;', src_schema, r.relname, target_schema);
+    ELSE
+      RAISE NOTICE 'Skipping sequence %, already exists in %', r.relname, target_schema;
+    END IF;
+  END LOOP;
+END
+$$ LANGUAGE plpgsql;
+
+COMMIT;

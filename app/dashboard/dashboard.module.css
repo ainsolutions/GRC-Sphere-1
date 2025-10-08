@@ -1,0 +1,101 @@
+/* Progress bar widths for different risk levels */
+.risk-progress-critical {
+  width: 100%;
+}
+
+.risk-progress-high {
+  width: 75%;
+}
+
+.risk-progress-medium {
+  width: 50%;
+}
+
+.risk-progress-low {
+  width: 25%;
+}
+
+/* Assessment progress bars */
+.assessment-progress-1 {
+  width: 100%;
+}
+
+.assessment-progress-2 {
+  width: 75%;
+}
+
+.assessment-progress-3 {
+  width: 50%;
+}
+
+.assessment-progress-4 {
+  width: 25%;
+}
+
+/* Vulnerability progress bars */
+.vuln-progress-1 {
+  width: 100%;
+}
+
+.vuln-progress-2 {
+  width: 75%;
+}
+
+.vuln-progress-3 {
+  width: 50%;
+}
+
+.vuln-progress-4 {
+  width: 25%;
+}
+
+/* Compliance progress bars */
+.compliance-progress-78 {
+  width: 78%;
+}
+
+.compliance-progress-82 {
+  width: 82%;
+}
+
+.compliance-progress-85 {
+  width: 85%;
+}
+
+.compliance-progress-88 {
+  width: 88%;
+}
+
+.compliance-progress-91 {
+  width: 91%;
+}
+
+.compliance-progress-89 {
+  width: 89%;
+}
+
+.compliance-progress-72 {
+  width: 72%;
+}
+
+.compliance-progress-76 {
+  width: 76%;
+}
+
+.compliance-progress-79 {
+  width: 79%;
+}
+
+.compliance-progress-83 {
+  width: 83%;
+}
+
+.compliance-progress-86 {
+  width: 86%;
+}
+
+.compliance-progress-84 {
+  width: 84%;
+}
+
+

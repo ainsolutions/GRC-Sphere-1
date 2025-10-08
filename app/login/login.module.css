@@ -1,0 +1,202 @@
+/* Aurora Animation Styles */
+.aurora-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: auroraFloat 3s ease-in-out infinite;
+}
+
+.aurora-particle:nth-child(odd) {
+  animation-delay: 0.5s;
+}
+
+.aurora-particle:nth-child(3n) {
+  animation-delay: 1s;
+}
+
+.aurora-particle:nth-child(4n) {
+  animation-delay: 1.5s;
+}
+
+@keyframes auroraFloat {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-10px) scale(1.2);
+  }
+}
+
+.network-line {
+  position: absolute;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  animation: networkPulse 4s ease-in-out infinite;
+}
+
+@keyframes networkPulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.1);
+  }
+}
+
+.emblem-glow {
+  animation: emblemPulse 2s ease-in-out infinite;
+}
+
+@keyframes emblemPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.8), 0 0 60px rgba(236, 72, 153, 0.6);
+  }
+}
+
+.neural-node {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: neuralPulse 2s ease-in-out infinite;
+}
+
+.neural-node:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.neural-node:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.neural-node:nth-child(3) {
+  animation-delay: 1s;
+}
+
+@keyframes neuralPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+.quantum-button {
+  background: linear-gradient(45deg, #06b6d4, #ec4899);
+  background-size: 200% 200%;
+  animation: quantumShift 3s ease-in-out infinite;
+}
+
+@keyframes quantumShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.quantum-button:hover {
+  background-position: 100% 50%;
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(6, 182, 212, 0.6);
+}
+
+/* Particle positioning classes */
+.particle-1 { left: 10%; top: 20%; }
+.particle-2 { left: 30%; top: 15%; }
+.particle-3 { left: 50%; top: 25%; }
+.particle-4 { left: 70%; top: 30%; }
+.particle-5 { left: 90%; top: 20%; }
+.particle-6 { left: 15%; top: 40%; }
+.particle-7 { left: 35%; top: 45%; }
+.particle-8 { left: 55%; top: 50%; }
+.particle-9 { left: 75%; top: 55%; }
+.particle-10 { left: 95%; top: 40%; }
+.particle-11 { left: 20%; top: 60%; }
+.particle-12 { left: 40%; top: 65%; }
+.particle-13 { left: 60%; top: 70%; }
+.particle-14 { left: 80%; top: 75%; }
+.particle-15 { left: 5%; top: 80%; }
+.particle-16 { left: 25%; top: 85%; }
+.particle-17 { left: 45%; top: 90%; }
+.particle-18 { left: 65%; top: 85%; }
+.particle-19 { left: 85%; top: 80%; }
+.particle-20 { left: 10%; top: 10%; }
+
+/* Network line positioning */
+.network-1 { left: 5%; top: 10%; width: 40px; height: 30px; transform: rotate(45deg); }
+.network-2 { left: 25%; top: 20%; width: 50px; height: 40px; transform: rotate(135deg); }
+.network-3 { left: 45%; top: 15%; width: 35px; height: 45px; transform: rotate(225deg); }
+.network-4 { left: 65%; top: 25%; width: 55px; height: 35px; transform: rotate(315deg); }
+.network-5 { left: 85%; top: 20%; width: 45px; height: 50px; transform: rotate(90deg); }
+.network-6 { left: 15%; top: 40%; width: 40px; height: 30px; transform: rotate(180deg); }
+.network-7 { left: 35%; top: 50%; width: 50px; height: 40px; transform: rotate(270deg); }
+.network-8 { left: 55%; top: 45%; width: 35px; height: 45px; transform: rotate(45deg); }
+.network-9 { left: 75%; top: 55%; width: 55px; height: 35px; transform: rotate(135deg); }
+.network-10 { left: 95%; top: 50%; width: 45px; height: 50px; transform: rotate(225deg); }
+
+/* Floating particles around emblem */
+.floating-particle-1 { left: 50%; top: 10%; }
+.floating-particle-2 { left: 75%; top: 25%; }
+.floating-particle-3 { left: 90%; top: 50%; }
+.floating-particle-4 { left: 75%; top: 75%; }
+.floating-particle-5 { left: 50%; top: 90%; }
+.floating-particle-6 { left: 25%; top: 75%; }
+.floating-particle-7 { left: 10%; top: 50%; }
+.floating-particle-8 { left: 25%; top: 25%; }
+
+/* SVG Aurora animations */
+.aurora-path-1 {
+  animation: auroraFlow1 4s ease-in-out infinite;
+}
+
+.aurora-path-2 {
+  animation: auroraFlow2 6s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+@keyframes auroraFlow1 {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0px);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes auroraFlow2 {
+  0%, 100% {
+    opacity: 0.2;
+    transform: translateY(0px);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .aurora-particle {
+    width: 2px;
+    height: 2px;
+  }
+  
+  .neural-node {
+    width: 6px;
+    height: 6px;
+  }
+}
