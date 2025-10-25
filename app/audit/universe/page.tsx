@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, Search, Filter, Eye, Edit, Trash2, AlertTriangle, CheckCircle, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format, parseISO, isValid } from 'date-fns';
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 const formattedDate = (entity: AuditUniverseEntity) => {
   if (!entity?.next_audit_due_date) return "N/A";
@@ -308,10 +309,11 @@ export default function AuditUniversePage() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Entity" />
+                {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Entity
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -413,8 +415,8 @@ export default function AuditUniversePage() {
                       />
                     </div>
                   </div>
-                  
-                 
+
+
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="risk_rating">Risk Rating</Label>
@@ -430,7 +432,7 @@ export default function AuditUniversePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                
+
                     <div className="space-y-2">
                       <Label htmlFor="business_criticality">Materiality Score</Label>
                       <Select value={formData.materiality_score} onValueChange={(value) => setFormData({ ...formData, materiality_score: value })}>
@@ -445,7 +447,7 @@ export default function AuditUniversePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  
+
                     <div className="space-y-2">
                       <Label htmlFor="regulatory_requirements">Regulatory Requirements</Label>
                       <Input
@@ -456,7 +458,7 @@ export default function AuditUniversePage() {
                         placeholder="Internal audit requirements, financial reporting requirements, etc."
                       />
                     </div>
-                  
+
                     <div className="space-y-2">
                       <Label htmlFor="audit_frequency">Audit Frequency</Label>
                       <Select value={formData.audit_frequency} onValueChange={(value) => setFormData({ ...formData, audit_frequency: value })}>
@@ -676,8 +678,8 @@ export default function AuditUniversePage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                            {formattedDate(entity)}
-                            </div>
+                          {formattedDate(entity)}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {entity.audit_frequency}
                         </div>
@@ -690,7 +692,14 @@ export default function AuditUniversePage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
+                          <ActionButtons isTableAction={true}
+                            onView={() => {}}
+                            onEdit={() => handleEditEntity(entity)}
+                                actionObj={entity}
+                            //onDelete={() => handleDeleteAsset(asset)}
+                            //deleteDialogTitle={entity.entity_name}
+                          />
+                          {/* <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditEntity(entity)}
@@ -700,10 +709,10 @@ export default function AuditUniversePage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {/* Handle view */}}
+                            onClick={() => { }}
                           >
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>

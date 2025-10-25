@@ -15,7 +15,9 @@ import {
   getMethodologies,
 } from "@/lib/actions/assessment-actions"
 import { useToast } from "@/hooks/use-toast"
-import { FileText, Target, AlertCircle } from "lucide-react"
+import { FileText, Target, AlertCircle, X } from "lucide-react"
+import AssetSelectInput from "@/components/asset-search-input"
+import { Badge } from "@/components/ui/badge"
 
 // Generate assessment ID in format ASSESS-YYYY-XXXXXX
 const generateAssessmentId = () => {
@@ -36,6 +38,22 @@ export function AssessmentForm({ assessment, onSuccess, onCancel }: AssessmentFo
   const [methodologies, setMethodologies] = useState<Array<{ value: string; label: string }>>([])
   const { toast } = useToast()
   const [assessmentId, setAssessmentId] = useState(assessment?.assessment_id || generateAssessmentId())
+  
+  // Assets state management
+  const [assets, setAssets] = useState<string[]>(() => {
+    if (assessment?.assets) {
+      if (typeof assessment.assets === "string") {
+        try {
+          return JSON.parse(assessment.assets).filter((asset: any) => typeof asset === "string")
+        } catch {
+          return []
+        }
+      }
+      return Array.isArray(assessment.assets) ? assessment.assets.filter((asset: any) => typeof asset === "string") : []
+    }
+    return []
+  })
+  const [assetSearchTerm, setAssetSearchTerm] = useState("")
 
   const isEditing = !!assessment
 
@@ -48,8 +66,23 @@ export function AssessmentForm({ assessment, onSuccess, onCancel }: AssessmentFo
     loadOptions()
   }, [])
 
+  const addAsset = (assetText: string) => {
+    const trimmedAsset = assetText.trim()
+    if (trimmedAsset && !assets.includes(trimmedAsset)) {
+      setAssets([...assets, trimmedAsset])
+      setAssetSearchTerm("")
+    }
+  }
+
+  const removeAsset = (assetToRemove: string) => {
+    setAssets(assets.filter((asset) => asset !== assetToRemove))
+  }
+
   const handleSubmit = async (formData: FormData) => {
     setIsSubmitting(true)
+
+    // Add assets to formData
+    formData.append('assets', JSON.stringify(assets))
 
     try {
       let result
@@ -175,6 +208,33 @@ export function AssessmentForm({ assessment, onSuccess, onCancel }: AssessmentFo
                 rows={3}
                 className="border-purple-200 focus:border-cyan-500 focus:ring-cyan-500 dark:bg-gradient-to-r dark:from-slate-900/80 dark:to-blue-950/80 dark:border-blue-800/50 dark:text-white"
               />
+            </div>
+
+            {/* Assets Section */}
+            <div className="space-y-2">
+              <Label>Associated Assets</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {assets.map((asset) => (
+                  <Badge key={asset} variant="secondary" className="flex items-center gap-1">
+                    {asset}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeAsset(asset)} />
+                  </Badge>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <AssetSelectInput 
+                  formData={{ asset: assetSearchTerm }} 
+                  setFormData={(data) => setAssetSearchTerm(data.asset)} 
+                  fieldName="asset"
+                  onAssetSelected={(selectedAsset) => {
+                    const assetText = `${selectedAsset.asset_name} (${selectedAsset.asset_id})`;
+                    addAsset(assetText);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Search and add multiple assets to be assessed
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

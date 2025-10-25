@@ -49,6 +49,8 @@ import {
 } from "@/components/ui/pagination"
 import { getThreats } from "@/lib/actions/threat-actions"
 import { getVulnerabilities } from "@/lib/actions/vulnerability-actions"
+import { da } from "date-fns/locale"
+import ControlSelectInput from "@/components/control-search-input"
 
 interface RiskTemplate {
   id: number
@@ -122,6 +124,10 @@ const getCurrentUserRole = () => {
 export function NISTCSFRiskTemplatesList() {
   const [templates, setTemplates] = useState<RiskTemplate[]>([])
   const [functions, setFunctions] = useState<CSFFunction[]>([])
+  /* const [functions, setFunctions] = useState<CSFFunction[]>([
+  { id: 1, function_code: "TEST1", function_name: "Test Func 1" },
+  { id: 2, function_code: "TEST2", function_name: "Test Func 2" },
+]) */
   const [categories, setCategories] = useState<CSFCategory[]>([])
   const [nistReferences, setNistReferences] = useState<NISTReference[]>([])
   const [implementationTiers, setImplementationTiers] = useState<ImplementationTier[]>([])
@@ -189,17 +195,18 @@ export function NISTCSFRiskTemplatesList() {
   const [selectedAssets, setSelectedAssets] = useState<string[]>([])
   const [selectedNISTRefs, setSelectedNISTRefs] = useState<string[]>([])
 
+
   const toggleItems = (Item: string, type: string) => {
     if (type === "threat_sources") {
-    setSelectedThreats((prev) => {
-      if (prev.includes(Item)) {
-        // remove
-        removeArrayItem("threat_sources", prev.indexOf(Item))
-        return prev.filter((f) => f !== Item)
-      } else {
-        // add
-        addArrayItem("threat_sources", Item, setThreatSourceInput)
-        return [...prev, Item]
+      setSelectedThreats((prev) => {
+        if (prev.includes(Item)) {
+          // remove
+          removeArrayItem("threat_sources", prev.indexOf(Item))
+          return prev.filter((f) => f !== Item)
+        } else {
+          // add
+          addArrayItem("threat_sources", Item, setThreatSourceInput)
+          return [...prev, Item]
         }
       })
     } else if (type == 'vulnerabilities') {
@@ -284,6 +291,8 @@ export function NISTCSFRiskTemplatesList() {
     try {
       const response = await fetch("/api/nist-csf-functions")
       const data = await response.json()
+      console.log("Debugging by ALi")
+      console.log(data.data)
 
       if (data.success) {
         setFunctions(data.data)
@@ -292,6 +301,10 @@ export function NISTCSFRiskTemplatesList() {
       console.error("Error fetching NIST CSF functions:", error)
     }
   }
+
+
+
+
 
   const fetchCategories = async () => {
     try {
@@ -361,44 +374,44 @@ export function NISTCSFRiskTemplatesList() {
     }
   }
 
-    const fetchThreats = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch("/api/threats")
-        const data = await res.json()
-        if (data.success && Array.isArray(data.data)) {
-          setThreats(data.data)
-        } else {
-          setThreats([])
-        }
-      } catch (err) {
-        console.error("Failed to load threats:", err)
+  const fetchThreats = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch("/api/threats")
+      const data = await res.json()
+      if (data.success && Array.isArray(data.data)) {
+        setThreats(data.data)
+      } else {
         setThreats([])
-      } finally {
-        setLoading(false)
       }
+    } catch (err) {
+      console.error("Failed to load threats:", err)
+      setThreats([])
+    } finally {
+      setLoading(false)
     }
-  
-    const fetchVulnerabilities = async () => {
-      try {
-        setLoading(true)
-        const result = await getVulnerabilities({
-          limit: 1000,
-        })
-        if (result.success && Array.isArray(result.data)) {
-          setVulnerabilities(result.data)
-        } else {
-          setVulnerabilities([])
-        }
-      } catch (error) {
-        console.error("Failed to load vulnerabilities:", error)
+  }
+
+  const fetchVulnerabilities = async () => {
+    try {
+      setLoading(true)
+      const result = await getVulnerabilities({
+        limit: 1000,
+      })
+      if (result.success && Array.isArray(result.data)) {
+        setVulnerabilities(result.data)
+      } else {
         setVulnerabilities([])
-      } finally {
-        setLoading(false)
       }
-
-
+    } catch (error) {
+      console.error("Failed to load vulnerabilities:", error)
+      setVulnerabilities([])
+    } finally {
+      setLoading(false)
     }
+
+
+  }
 
   useEffect(() => {
     fetchFunctions()
@@ -853,7 +866,7 @@ export function NISTCSFRiskTemplatesList() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="template_name">Template Name *</Label>
+                <Label htmlFor="template_name">RIsk Title *</Label>
                 <Input
                   id="template_name"
                   value={formData.template_name}
@@ -882,6 +895,12 @@ export function NISTCSFRiskTemplatesList() {
                   </SelectContent>
                 </Select>
               </div>
+
+
+
+
+
+
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1081,24 +1100,26 @@ export function NISTCSFRiskTemplatesList() {
             {/* Existing Controls */}
             <div>
               <Label>Existing Controls</Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  value={existingControlInput}
-                  onChange={(e) => setExistingControlInput(e.target.value)}
-                  placeholder="Add existing control"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      addArrayItem("existing_controls", existingControlInput, setExistingControlInput)
+              <div className="mt-2">
+                <ControlSelectInput
+                  formData={{ controlSearch: existingControlInput }}
+                  setFormData={(data) => setExistingControlInput(data.controlSearch || "")}
+                  fieldName="controlSearch"
+                  onControlSelected={(control) => {
+                    // Add the control to the existing_controls array
+                    const controlText = `${control.control_id} - ${control.name}`;
+                    if (!formData.existing_controls.includes(controlText)) {
+                      setFormData({
+                        ...formData,
+                        existing_controls: [...formData.existing_controls, controlText]
+                      });
                     }
+                    setExistingControlInput(""); // Clear the input after adding
                   }}
                 />
-                <Button
-                  type="button"
-                  onClick={() => addArrayItem("existing_controls", existingControlInput, setExistingControlInput)}
-                >
-                  Add
-                </Button>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Search and select controls from governance controls
+                </p>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.existing_controls.map((control, index) => (
@@ -1444,8 +1465,8 @@ export function NISTCSFRiskTemplatesList() {
                       <div className="flex justify-end space-x-2">
                         <Button onClick={() => setIsExportDialogOpen(false)}>
                           Cancel
-                          </Button>
-                          <Button onClick={() => handleExport("csv")} disabled={exporting}>
+                        </Button>
+                        <Button onClick={() => handleExport("csv")} disabled={exporting}>
                           {exporting ? "Exporting..." : "Export CSV"}
                         </Button>
                       </div>
@@ -1455,7 +1476,7 @@ export function NISTCSFRiskTemplatesList() {
 
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
-                   <Button onClick={resetForm}>
+                    <Button onClick={resetForm}>
                       Add New Risk
                     </Button>
                   </DialogTrigger>
@@ -1574,7 +1595,7 @@ export function NISTCSFRiskTemplatesList() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="truncate">Template ID</TableHead>
-                    <TableHead className="truncate">Template Name</TableHead>
+                    <TableHead className="truncate">Risk Title</TableHead>
                     <TableHead className="truncate">Function</TableHead>
                     <TableHead className="truncate">Risk Level</TableHead>
                     <TableHead className="truncate">Residual Risk</TableHead>
@@ -1613,10 +1634,10 @@ export function NISTCSFRiskTemplatesList() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge  variant="outline" className={getRiskLevelColor(template.risk_level)}>{template.risk_level}</Badge>
+                          <Badge variant="outline" className={getRiskLevelColor(template.risk_level)}>{template.risk_level}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge  variant="outline" className={getRiskLevelColor(template.residual_risk_level || template.risk_level)}>
+                          <Badge variant="outline" className={getRiskLevelColor(template.residual_risk_level || template.risk_level)}>
                             {template.residual_risk_level || template.risk_level}
                           </Badge>
                         </TableCell>
@@ -1651,8 +1672,8 @@ export function NISTCSFRiskTemplatesList() {
                                 </Button>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="sm" 
-                                    className="text-red-400 hover:bg-red-900/20 hover:text-red-300">
+                                    <Button variant="ghost" size="sm"
+                                      className="text-red-400 hover:bg-red-900/20 hover:text-red-300">
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </AlertDialogTrigger>

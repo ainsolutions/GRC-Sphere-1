@@ -18,6 +18,7 @@ export interface ISO27001Risk {
   risk_level: "Low" | "Medium" | "High" | "Critical"
   status: "Open" | "In Progress" | "Mitigated" | "Accepted"
   owner: string | null
+  threat: string | null
   treatment_plan: string | null
   residual_likelihood: number | null
   residual_impact: number | null
@@ -26,7 +27,8 @@ export interface ISO27001Risk {
   next_review: string | null
   controls: string[]
   assets: string[]
-  control_assessment: string | null
+ 
+  existing_controls: string | null
   risk_treatment: string | null
   created_at: string
   updated_at: string
@@ -66,15 +68,16 @@ export async function getISO27001Risks(ctx: HttpSessionContext): Promise<ISO2700
         risk_level,
         status,
         owner,
+        threat,
         treatment_plan,
         residual_likelihood,
         residual_impact,
         residual_risk,
         last_reviewed::text,
         next_review::text,
-        COALESCE(controls, ARRAY[]::text[]) as controls,
+        COALESCE(controls, ARRAY[]::text[]) as controls,     
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text
@@ -104,6 +107,7 @@ export async function getISO27001RiskById(ctx: HttpSessionContext, id: number): 
         risk_level,
         status,
         owner,
+        threat,
         treatment_plan,
         residual_likelihood,
         residual_impact,
@@ -112,7 +116,7 @@ export async function getISO27001RiskById(ctx: HttpSessionContext, id: number): 
         next_review::text,
         COALESCE(controls, ARRAY[]::text[]) as controls,
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text
@@ -133,11 +137,12 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
   likelihood: number
   impact: number
   owner?: string
+  threat?: string
   treatment_plan?: string
   status?: string
   controls?: string[]
   assets?: string[]
-  control_assessment?: string
+  existing_controls?: string
   risk_treatment?: string
   residual_likelihood?: number
   residual_impact?: number
@@ -164,6 +169,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         likelihood,
         impact,
         owner,
+        threat,
         treatment_plan,
         status,
         residual_likelihood,
@@ -172,7 +178,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         next_review,
         controls,
         assets,
-        control_assessment,
+        existing_controls,
         risk_treatment
       ) VALUES (
         ${riskId},
@@ -182,6 +188,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         ${data.likelihood},
         ${data.impact},
         ${data.owner || null},
+        ${data.threat || null},
         ${data.treatment_plan || null},
         ${data.status || "Open"},
         ${data.residual_likelihood || null},
@@ -190,7 +197,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         ${nextReview},
         ${data.controls || []},
         ${data.assets || []},
-        ${data.control_assessment || null},
+        ${data.existing_controls || null},
         ${data.risk_treatment || null}
       )
       RETURNING 
@@ -205,6 +212,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         risk_level,
         status,
         owner,
+        threat,
         treatment_plan,
         residual_likelihood,
         residual_impact,
@@ -213,7 +221,7 @@ export async function createISO27001Risk(ctx: HttpSessionContext, data: {
         next_review::text,
         COALESCE(controls, ARRAY[]::text[]) as controls,
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text
@@ -236,11 +244,12 @@ export async function updateISO27001Risk(ctx: HttpSessionContext,
     likelihood: number;
     impact: number;
     owner: string;
+    threat: string;
     treatment_plan: string;
     status: string;
     controls: string[];
     assets: string[];
-    control_assessment: string;
+    existing_controls: string;
     risk_treatment: string;
     residual_likelihood: number;
     residual_impact: number;
@@ -279,6 +288,10 @@ export async function updateISO27001Risk(ctx: HttpSessionContext,
       updateFields.push(`owner = $${paramIndex++}`);
       values.push(data.owner);
     }
+    if (data.threat !== undefined) {
+      updateFields.push(`threat = $${paramIndex++}`);
+      values.push(data.threat);
+    }
     if (data.treatment_plan !== undefined) {
       updateFields.push(`treatment_plan = $${paramIndex++}`);
       values.push(data.treatment_plan);
@@ -295,9 +308,9 @@ export async function updateISO27001Risk(ctx: HttpSessionContext,
       updateFields.push(`assets = $${paramIndex++}`);
       values.push(data.assets);
     }
-    if (data.control_assessment !== undefined) {
-      updateFields.push(`control_assessment = $${paramIndex++}`);
-      values.push(data.control_assessment);
+    if (data.existing_controls !== undefined) {
+      updateFields.push(`existing_controls = $${paramIndex++}`);
+      values.push(data.existing_controls);
     }
     if (data.risk_treatment !== undefined) {
       updateFields.push(`risk_treatment = $${paramIndex++}`);
@@ -344,16 +357,17 @@ export async function updateISO27001Risk(ctx: HttpSessionContext,
         risk_score,
         risk_level,
         status,
-        owner,
+        owner,  
         treatment_plan,
         residual_likelihood,
         residual_impact,
         residual_risk,
         last_reviewed::text,
         next_review::text,
+        threat,
         COALESCE(controls, ARRAY[]::text[]) as controls,
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text

@@ -21,6 +21,7 @@ import {
 import { Progress } from "@/components/ui/progress"
 import { Plus, Edit, Download, SaveAll, CheckCircle, AlertCircle, Building2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface RiskTemplate {
   id: number
@@ -450,10 +451,11 @@ export function ThirdPartyRiskAssessment() {
         </div>
         <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+            <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Assessment"/>
+            {/* <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
               <Plus className="h-4 w-4 mr-2" />
               New Assessment
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="bg-white/95 dark:bg-black/95 backdrop-blur-md border border-white/20">
             <form action={createNewAssessment}>
@@ -523,10 +525,11 @@ export function ThirdPartyRiskAssessment() {
             <div className="text-center py-8">
               <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 dark:text-gray-400 mb-4">No assessments found</p>
-              <Button onClick={() => setIsNewAssessmentOpen(true)}>
+              <ActionButtons isTableAction={false} onAdd={()=>{setIsAssessmentOpen}} btnAddText="Create Your First Assessment"/>
+              {/* <Button onClick={() => setIsNewAssessmentOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Your First Assessment
-              </Button>
+              </Button> */}
             </div>
           ) : (
             <div className="rounded-md border border-white/20 overflow-hidden">
@@ -593,14 +596,21 @@ export function ThirdPartyRiskAssessment() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button
+                          <ActionButtons isTableAction={true} 
+                                  //onView={() => {}} 
+                                  onEdit={() => {()=>{openAssessment(assessment)}}} 
+                                actionObj={assessment}
+                                  // onDelete={() => {}}   
+                                  // deleteDialogTitle={}                                
+                                  />
+                          {/* <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => openAssessment(assessment)}
                             className="text-slate-300 hover:bg-slate-700"
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                           <Button
                             variant="ghost"
                             size="sm"

@@ -43,6 +43,7 @@ export async function getAssets_Obsolete(searchTerm?: string, limit = 50, offset
           asset_type,
           classification,
           owner,
+          department,
           business_value,
           custodian,
           retention_period,

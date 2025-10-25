@@ -15,6 +15,7 @@ import { X, Plus, Brain, Loader2, RefreshCw, Edit } from "lucide-react"
 import { createThreat, updateThreat } from "@/lib/actions/threat-actions"
 import { useToast } from "@/hooks/use-toast"
 import { RiskTitleField } from "@/components/risk-title-field"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface Threat {
   id?: string
@@ -465,9 +466,10 @@ export function ThreatForm({ threat, onClose }: ThreatFormProps) {
                       e.key === "Enter" && (e.preventDefault(), addItem("indicators_of_compromise", newIoC))
                     }
                   />
-                  <Button type="button" variant="outline" onClick={() => addItem("indicators_of_compromise", newIoC)}>
+                  <ActionButtons isTableAction={false} onAdd={() => addItem("indicators_of_compromise", newIoC)} btnAddText=""/>
+                  {/* <Button type="button" variant="outline" onClick={() => addItem("indicators_of_compromise", newIoC)}>
                     <Plus className="h-4 w-4" />
-                  </Button>
+                  </Button> */}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(formData.indicators_of_compromise)
@@ -497,9 +499,10 @@ export function ThreatForm({ threat, onClose }: ThreatFormProps) {
                       e.key === "Enter" && (e.preventDefault(), addItem("mitigation_strategies", newStrategy))
                     }
                   />
-                  <Button type="button" variant="outline" onClick={() => addItem("mitigation_strategies", newStrategy)}>
+                  <ActionButtons isTableAction={false} onAdd={() => addItem("mitigation_strategies", newStrategy)} btnAddText=""/>
+                  {/* <Button type="button" variant="outline" onClick={() => addItem("mitigation_strategies", newStrategy)}>
                     <Plus className="h-4 w-4" />
-                  </Button>
+                  </Button> */}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(formData.mitigation_strategies)
@@ -529,9 +532,10 @@ export function ThreatForm({ threat, onClose }: ThreatFormProps) {
                       e.key === "Enter" && (e.preventDefault(), addItem("threat_references", newReference))
                     }
                   />
-                  <Button type="button" variant="outline" onClick={() => addItem("threat_references", newReference)}>
+                  <ActionButtons isTableAction={false} onAdd={() => addItem("threat_references", newReference)} btnAddText=""/>
+                  {/* <Button type="button" variant="outline" onClick={() => addItem("threat_references", newReference)}>
                     <Plus className="h-4 w-4" />
-                  </Button>
+                  </Button> */}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(Array.isArray(formData.threat_references)

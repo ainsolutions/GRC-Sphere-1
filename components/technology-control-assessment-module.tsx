@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { AlertCircle, CheckCircle, Clock, FileText, Plus, Search, Shield, Target } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ControlAssessmentItem {
   id: number
@@ -218,10 +219,11 @@ export default function TechnologyControlAssessmentModule({
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold">Control Assessments</h3>
             {!readOnly && (
-              <Button onClick={() => setShowNewAssessmentDialog(true)}>
+              <ActionButtons isTableAction={false} onAdd={()=>{setShowNewAssessmentDialog}} btnAddText="New Assessment"/>
+              {/* <Button onClick={() => setShowNewAssessmentDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Assessment
-              </Button>
+              </Button> */}
             )}
           </div>
 
@@ -295,10 +297,11 @@ export default function TechnologyControlAssessmentModule({
                 />
               </div>
               {!readOnly && (
-                <Button onClick={() => setShowControlDialog(true)}>
+                <ActionButtons isTableAction={false} onAdd={()=>{setShowControlDialog}} btnAddText="Add Control"/>
+                {/* <Button onClick={() => setShowControlDialog(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Control
-                </Button>
+                </Button> */}
               )}
             </div>
           </div>

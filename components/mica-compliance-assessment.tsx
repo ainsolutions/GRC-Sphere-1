@@ -35,6 +35,7 @@ import {
   Activity,
   RefreshCw,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MICAAssessment {
   id: string
@@ -295,10 +296,11 @@ export function MICAComplianceAssessment() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={()=>[]} btnAddText="New Assessment"/>
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   New Assessment
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -640,7 +642,14 @@ export function MICAComplianceAssessment() {
                         <TableCell>{new Date(assessment.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Button variant="outline" size="sm" onClick={() => setSelectedAssessment(assessment)}>
+                            <ActionButtons isTableAction={true} 
+                                  onView={() => setSelectedAssessment(assessment)} 
+                                  onEdit={() => setEditingAssessment(assessment)} 
+                                  onDelete={() => handleDeleteAssessment(assessment.id)}   
+                                  deleteDialogTitle={assessment.assessment_name}    
+                                actionObj={assessment}                            
+                                  />
+                            {/* <Button variant="outline" size="sm" onClick={() => setSelectedAssessment(assessment)}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => setEditingAssessment(assessment)}>
@@ -648,7 +657,7 @@ export function MICAComplianceAssessment() {
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => handleDeleteAssessment(assessment.id)}>
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

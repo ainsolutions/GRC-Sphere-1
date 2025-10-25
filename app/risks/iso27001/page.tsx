@@ -81,8 +81,11 @@ import {
 } from "@/components/ui/pagination"
 
 import OwnerSelectInput from "@/components/owner-search-input"
+import ThreatSelectInput from "@/components/threat-search-input"
+import ControlSelectInput from "@/components/control-search-input"
 import StarBorder from "@/app/StarBorder"
 import ExportButton from "@/components/export-button"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 //#endregion
 
@@ -121,6 +124,7 @@ interface FrontendRisk {
   riskLevel: "Low" | "Medium" | "High" | "Critical"
   status: "Open" | "In Progress" | "Mitigated" | "Accepted"
   owner: string
+  threat?: string
   treatmentPlan?: string
   residualLikelihood: number
   residualImpact: number
@@ -131,6 +135,7 @@ interface FrontendRisk {
   controlEffectiveness: ControlEffectiveness[]
   assets: string[]
   controlAssessment?: string
+  existingControls?: string
   riskTreatment?: string
   reviewDate?: string
   evidence?: Evidence[]
@@ -289,6 +294,7 @@ function transformRisk(dbRisk: ISO27001Risk): FrontendRisk {
     riskLevel: dbRisk.risk_level,
     status: dbRisk.status,
     owner: dbRisk.owner || "",
+    threat: dbRisk.threat || "",
     treatmentPlan: dbRisk.treatment_plan || "",
     residualLikelihood: dbRisk.residual_likelihood || 1,
     residualImpact: dbRisk.residual_impact || 1,
@@ -298,7 +304,7 @@ function transformRisk(dbRisk: ISO27001Risk): FrontendRisk {
     controls: dbRisk.controls,
     controlEffectiveness: [], // Will be populated separately
     assets: dbRisk.assets,
-    controlAssessment: dbRisk.control_assessment || "",
+    existingControls: dbRisk.existing_controls || "",
     riskTreatment: dbRisk.risk_treatment || "",
     reviewDate: dbRisk.next_review || "",
     evidence: [], // Will be populated separately
@@ -330,8 +336,10 @@ export default function ISO27001RiskManagement() {
     controls: [],
     controlEffectiveness: [],
     assets: [],
+    threat: "",
     treatmentPlan: "",
     controlAssessment: "",
+    existingControls: "",
     riskTreatment: "",
     reviewDate: "",
     residualLikelihood: 1,
@@ -356,6 +364,7 @@ export default function ISO27001RiskManagement() {
   const [uploadingEvidence, setUploadingEvidence] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<{
     controlAssessment: string
+    existingControls: string
     treatmentPlan: string
     riskTreatment: string
     status: string
@@ -364,6 +373,7 @@ export default function ISO27001RiskManagement() {
     controls: string[]
   }>({
     controlAssessment: "",
+    existingControls: "",
     treatmentPlan: "",
     riskTreatment: "",
     status: "Open",
@@ -384,190 +394,241 @@ export default function ISO27001RiskManagement() {
   const [assetsSourceInput, setAssetsSourceInput] = useState("")
   const [assets, setAssets] = useState([])
   const [selectedAssets, setSelectedAssets] = useState<string[]>([])
+  const [existingControlInput, setExistingControlInput] = useState("")
+  const [editExistingControlInput, setEditExistingControlInput] = useState("")
 
+  // Helper functions to parse and stringify existingControls
+  const parseExistingControls = (controlsString?: string): string[] => {
+    if (!controlsString) return []
+    try {
+      // Try parsing as JSON array first
+      return JSON.parse(controlsString)
+    } catch {
+      // If not JSON, split by comma
+      return controlsString.split(',').map(c => c.trim()).filter(c => c)
+    }
+  }
+
+  const stringifyExistingControls = (controlsArray: string[]): string => {
+    return JSON.stringify(controlsArray)
+  }
+
+  // Helper functions for managing existing controls in new risk form
+  const addExistingControl = (controlText: string) => {
+    const currentControls = parseExistingControls(newRisk.existingControls)
+    if (!currentControls.includes(controlText)) {
+      setNewRisk({
+        ...newRisk,
+        existingControls: stringifyExistingControls([...currentControls, controlText])
+      })
+    }
+  }
+
+  const removeExistingControl = (index: number) => {
+    const currentControls = parseExistingControls(newRisk.existingControls)
+    currentControls.splice(index, 1)
+    setNewRisk({ ...newRisk, existingControls: stringifyExistingControls(currentControls) })
+  }
+
+  // Helper functions for managing existing controls in edit form
+  const addEditExistingControl = (controlText: string) => {
+    const currentControls = parseExistingControls(editForm.existingControls)
+    if (!currentControls.includes(controlText)) {
+      setEditForm({
+        ...editForm,
+        existingControls: stringifyExistingControls([...currentControls, controlText])
+      })
+    }
+  }
+
+  const removeEditExistingControl = (index: number) => {
+    const currentControls = parseExistingControls(editForm.existingControls)
+    currentControls.splice(index, 1)
+    setEditForm({ ...editForm, existingControls: stringifyExistingControls(currentControls) })
+  }
 
   // Load risks from database
- useEffect(() => {
-  async function loadRisks() {
-    try {
-      setLoading(true)
+  useEffect(() => {
+    async function loadRisks() {
+      try {
+        setLoading(true)
 
-      // ✅ call the API route, not the server action
-      const res = await fetch("/api/iso27001-risks")
-      const json = await res.json()
+        // ✅ call the API route, not the server action
+        const res = await fetch("/api/iso27001-risks")
+        const json = await res.json()
 
-      if (!json.success) {
-        console.error("Failed to load risks:", json.error)
+        if (!json.success) {
+          console.error("Failed to load risks:", json.error)
+          toast.error("Failed to load risks")
+          return
+        }
+
+        const dbRisks = json.data
+
+        // Load control effectiveness and evidence for each risk
+        const risksWithData = await Promise.all(
+          dbRisks.map(async (risk: any) => {
+            try {
+              const [effectivenessResponse, evidenceResponse] = await Promise.all([
+                fetch(`/api/iso27001-risks/${risk.id}/control-effectiveness`),
+                fetch(`/api/iso27001-evidence?riskId=${risk.id}`),
+              ])
+
+              const effectivenessData = effectivenessResponse.ok
+                ? await effectivenessResponse.json()
+                : []
+              const evidenceData = evidenceResponse.ok
+                ? await evidenceResponse.json()
+                : []
+
+              const transformedRisk = transformRisk(risk)
+              transformedRisk.controlEffectiveness = effectivenessData.map((ce: any) => ({
+                controlId: ce.control_id,
+                effectiveness: ce.effectiveness,
+              }))
+              transformedRisk.evidence = evidenceData
+
+              return transformedRisk
+            } catch (error) {
+              console.error(`Error loading data for risk ${risk.id}:`, error)
+              return transformRisk(risk)
+            }
+          })
+        )
+
+        setRisks(risksWithData)
+      } catch (error) {
+        console.error("Error loading risks:", error)
         toast.error("Failed to load risks")
-        return
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadRisks()
+  }, [])
+
+  // --- state for Import / Export ---
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [importResults, setImportResults] = useState<{ imported: number; errors: string[] } | null>(null)
+
+  // optional filters if you want to filter exports
+  const [riskLevelFilter, setRiskLevelFilter] = useState("all")
+
+
+  const handleExport = async (format: "csv" | "template" = "csv") => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        format,
+        search: searchTerm,
+      });
+
+      if (riskLevelFilter !== "all") {
+        params.append("riskLevel", riskLevelFilter);
       }
 
-      const dbRisks = json.data
+      // Call API directly (server action already uses absolute URL if needed)
+      const res = await fetch(`/api/iso27001-risks/export?${params}`);
 
-      // Load control effectiveness and evidence for each risk
-      const risksWithData = await Promise.all(
-        dbRisks.map(async (risk: any) => {
-          try {
-            const [effectivenessResponse, evidenceResponse] = await Promise.all([
-              fetch(`/api/iso27001-risks/${risk.id}/control-effectiveness`),
-              fetch(`/api/iso27001-evidence?riskId=${risk.id}`),
-            ])
+      if (!res.ok) {
+        throw new Error("Failed to export");
+      }
 
-            const effectivenessData = effectivenessResponse.ok
-              ? await effectivenessResponse.json()
-              : []
-            const evidenceData = evidenceResponse.ok
-              ? await evidenceResponse.json()
-              : []
+      if (format === "csv") {
+        // ✅ Read raw text for CSV
+        const csvContent = await res.text();
 
-            const transformedRisk = transformRisk(risk)
-            transformedRisk.controlEffectiveness = effectivenessData.map((ce: any) => ({
-              controlId: ce.control_id,
-              effectiveness: ce.effectiveness,
-            }))
-            transformedRisk.evidence = evidenceData
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `iso27001-risks-${new Date()
+          .toISOString()
+          .split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
 
-            return transformedRisk
-          } catch (error) {
-            console.error(`Error loading data for risk ${risk.id}:`, error)
-            return transformRisk(risk)
-          }
-        })
-      )
-
-      setRisks(risksWithData)
-    } catch (error) {
-      console.error("Error loading risks:", error)
-      toast.error("Failed to load risks")
+        toast({
+          title: "Export Successful",
+          description: "CSV file downloaded",
+        });
+      } else {
+        // If you later add JSON/template support
+        const data = await res.json();
+        toast({
+          title: "Export Successful",
+          description: `Exported ${data.data.length} risks`,
+        });
+      }
+    } catch (err) {
+      console.error("Error exporting ISO27001 risks:", err);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export ISO27001 risks",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setExporting(false);
+      setIsExportDialogOpen(false);
     }
-  }
-
-  loadRisks()
-}, [])
-
-// --- state for Import / Export ---
-const [importFile, setImportFile] = useState<File | null>(null)
-const [importing, setImporting] = useState(false)
-const [exporting, setExporting] = useState(false)
-const [importResults, setImportResults] = useState<{ imported: number; errors: string[] } | null>(null)
-
-// optional filters if you want to filter exports
-const [riskLevelFilter, setRiskLevelFilter] = useState("all")
-
-
-const handleExport = async (format: "csv" | "template" = "csv") => {
-  setExporting(true);
-  try {
-    const params = new URLSearchParams({
-      format,
-      search: searchTerm,
-    });
-
-    if (riskLevelFilter !== "all") {
-      params.append("riskLevel", riskLevelFilter);
-    }
-
-    // Call API directly (server action already uses absolute URL if needed)
-    const res = await fetch(`/api/iso27001-risks/export?${params}`);
-
-    if (!res.ok) {
-      throw new Error("Failed to export");
-    }
-
-    if (format === "csv") {
-      // ✅ Read raw text for CSV
-      const csvContent = await res.text();
-
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `iso27001-risks-${new Date()
-        .toISOString()
-        .split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export Successful",
-        description: "CSV file downloaded",
-      });
-    } else {
-      // If you later add JSON/template support
-      const data = await res.json();
-      toast({
-        title: "Export Successful",
-        description: `Exported ${data.data.length} risks`,
-      });
-    }
-  } catch (err) {
-    console.error("Error exporting ISO27001 risks:", err);
-    toast({
-      title: "Export Failed",
-      description: "Failed to export ISO27001 risks",
-      variant: "destructive",
-    });
-  } finally {
-    setExporting(false);
-    setIsExportDialogOpen(false);
-  }
-};
+  };
 
 
 
-const handleImport = async () => {
-  if (!importFile) return
-  setImporting(true)
-  try {
-    // 1️⃣ read the CSV locally
-    const text = await importFile.text()
-    const lines = text.split("\n").filter((line) => line.trim())
-    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
+  const handleImport = async () => {
+    if (!importFile) return
+    setImporting(true)
+    try {
+      // 1️⃣ read the CSV locally
+      const text = await importFile.text()
+      const lines = text.split("\n").filter((line) => line.trim())
+      const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""))
 
-    const csvData = lines.slice(1).map((line) => {
-      const values = line.split(",").map((v) => v.trim().replace(/"/g, ""))
-      const row: Record<string, string> = {}
-      headers.forEach((header, idx) => {
-        row[header] = values[idx] || ""
+      const csvData = lines.slice(1).map((line) => {
+        const values = line.split(",").map((v) => v.trim().replace(/"/g, ""))
+        const row: Record<string, string> = {}
+        headers.forEach((header, idx) => {
+          row[header] = values[idx] || ""
+        })
+        return row
       })
-      return row
-    })
 
-    // 2️⃣ send it to the ISO27001 import API
-    const res = await fetch("/api/iso27001-risks/import", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ csvData }),
-    })
-
-    const data = await res.json()
-
-    if (data.success) {
-      setImportResults({ imported: data.imported, errors: data.errors })
-      toast({
-        title: "Import Successful",
-        description: `Imported ${data.imported} risks with ${data.errors.length} errors`,
+      // 2️⃣ send it to the ISO27001 import API
+      const res = await fetch("/api/iso27001-risks/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csvData }),
       })
-      // 🔹 re-load the risks table
-      loadRisks()
-    } else {
-      throw new Error(data.error)
+
+      const data = await res.json()
+
+      if (data.success) {
+        setImportResults({ imported: data.imported, errors: data.errors })
+        toast({
+          title: "Import Successful",
+          description: `Imported ${data.imported} risks with ${data.errors.length} errors`,
+        })
+        // 🔹 re-load the risks table
+        loadRisks()
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (err) {
+      console.error("Error importing ISO27001 risks:", err)
+      toast({
+        title: "Import Failed",
+        description: "Failed to import ISO27001 risks",
+        variant: "destructive",
+      })
+    } finally {
+      setImporting(false)
     }
-  } catch (err) {
-    console.error("Error importing ISO27001 risks:", err)
-    toast({
-      title: "Import Failed",
-      description: "Failed to import ISO27001 risks",
-      variant: "destructive",
-    })
-  } finally {
-    setImporting(false)
   }
-}
 
 
 
@@ -1078,6 +1139,7 @@ const handleImport = async () => {
     setEditingRisk(risk.id)
     setEditForm({
       controlAssessment: risk.controlAssessment || "",
+      existingControls: risk.existingControls || "",
       treatmentPlan: risk.treatmentPlan || "",
       riskTreatment: risk.riskTreatment || "",
       status: risk.status,
@@ -1085,12 +1147,14 @@ const handleImport = async () => {
       residualImpact: risk.residualImpact,
       controls: [...(risk.controls || [])],
     })
+    setEditExistingControlInput("")
   }
 
   const startEditingControls = (risk: FrontendRisk) => {
     setEditingControls(risk.id)
     setEditForm({
       controlAssessment: risk.controlAssessment || "",
+      existingControls: risk.existingControls || "",
       treatmentPlan: risk.treatmentPlan || "",
       riskTreatment: risk.riskTreatment || "",
       status: risk.status,
@@ -1098,6 +1162,7 @@ const handleImport = async () => {
       residualImpact: risk.residualImpact,
       controls: [...(risk.controls || [])],
     })
+    setEditExistingControlInput("")
   }
 
   const cancelEditing = () => {
@@ -1106,6 +1171,7 @@ const handleImport = async () => {
     setUploadingEvidence(null)
     setEditForm({
       controlAssessment: "",
+      existingControls: "",
       treatmentPlan: "",
       riskTreatment: "",
       status: "Open",
@@ -1113,6 +1179,7 @@ const handleImport = async () => {
       residualImpact: 1,
       controls: [],
     })
+    setEditExistingControlInput("")
   }
 
   const addControlToRisk = (controlId: string) => {
@@ -1189,7 +1256,7 @@ const handleImport = async () => {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          control_assessment: editForm.controlAssessment,
+          existing_controls: editForm.existingControls,
           treatment_plan: editForm.treatmentPlan,
           risk_treatment: editForm.riskTreatment,
           status: editForm.status,
@@ -1279,14 +1346,14 @@ const handleImport = async () => {
       toast.error("Failed to update control effectiveness")
     }
   }
-const handleAddRisk = async () => {
-  if (!newRisk.title || !newRisk.description || !newRisk.category || !newRisk.owner) {
-    toast.error("Please fill in all required fields (Title, Description, Category, Owner)")
-    return
-  }
+  const handleAddRisk = async () => {
+    if (!newRisk.title || !newRisk.description || !newRisk.category || !newRisk.owner) {
+      toast.error("Please fill in all required fields (Title, Description, Category, Owner)")
+      return
+    }
 
-  try {
-    setSubmitting(true)
+    try {
+      setSubmitting(true)
 
     const res = await fetch("/api/iso27001-risks", {
       method: "POST",
@@ -1298,11 +1365,12 @@ const handleAddRisk = async () => {
         likelihood: newRisk.likelihood || 1,
         impact: newRisk.impact || 1,
         owner: newRisk.owner,
+        threat: newRisk.threat,
         treatment_plan: newRisk.treatmentPlan,
         status: newRisk.status,
         controls: newRisk.controls,
         assets: newRisk.assets,
-        control_assessment: newRisk.controlAssessment,
+        existing_controls: newRisk.existingControls,
         risk_treatment: newRisk.riskTreatment,
         residual_likelihood: newRisk.residualLikelihood,
         residual_impact: newRisk.residualImpact,
@@ -1310,39 +1378,39 @@ const handleAddRisk = async () => {
       }),
     });
 
-    if (!res.ok) throw new Error("Failed to create risk");
-    const dbRisk = await res.json();
+      if (!res.ok) throw new Error("Failed to create risk");
+      const dbRisk = await res.json();
 
-    // update local state
-    const transformedRisk = transformRisk(dbRisk);
-    transformedRisk.controlEffectiveness = newRisk.controlEffectiveness || [];
-    transformedRisk.evidence = [];
+      // update local state
+      const transformedRisk = transformRisk(dbRisk);
+      transformedRisk.controlEffectiveness = newRisk.controlEffectiveness || [];
+      transformedRisk.evidence = [];
 
-    setRisks([transformedRisk, ...risks]);
-    resetAddRisk();
-    toast.success("Risk added successfully");
-  } catch (error) {
-    console.error("Error adding risk:", error);
-    toast.error("Failed to add risk");
-  } finally {
-    setSubmitting(false);
-  }
-};
+      setRisks([transformedRisk, ...risks]);
+      resetAddRisk();
+      toast.success("Risk added successfully");
+    } catch (error) {
+      console.error("Error adding risk:", error);
+      toast.error("Failed to add risk");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleEditRisk = async () => {
-  if (
-    !selectedRisk ||
-    !selectedRisk.title ||
-    !selectedRisk.description ||
-    !selectedRisk.category ||
-    !selectedRisk.owner
-  ) {
-    toast.error("Please fill in all required fields (Title, Description, Category, Owner)")
-    return
-  }
+    if (
+      !selectedRisk ||
+      !selectedRisk.title ||
+      !selectedRisk.description ||
+      !selectedRisk.category ||
+      !selectedRisk.owner
+    ) {
+      toast.error("Please fill in all required fields (Title, Description, Category, Owner)")
+      return
+    }
 
-  try {
-    setSubmitting(true)
+    try {
+      setSubmitting(true)
 
     // 🔹 Call the API endpoint directly
     const res = await fetch(`/api/iso27001-risks/${selectedRisk.id}`, {
@@ -1355,11 +1423,12 @@ const handleAddRisk = async () => {
         likelihood: selectedRisk.likelihood,
         impact: selectedRisk.impact,
         owner: selectedRisk.owner,
+        threat: selectedRisk.threat,
         treatment_plan: selectedRisk.treatmentPlan,
         status: selectedRisk.status,
         controls: selectedRisk.controls,
         assets: selectedRisk.assets,
-        control_assessment: selectedRisk.controlAssessment,
+        existing_controls: selectedRisk.existingControls,
         risk_treatment: selectedRisk.riskTreatment,
         residual_likelihood: selectedRisk.residualLikelihood,
         residual_impact: selectedRisk.residualImpact,
@@ -1367,42 +1436,42 @@ const handleAddRisk = async () => {
       }),
     });
 
-    if (!res.ok) throw new Error("Failed to update risk");
-    const updatedRisk = await res.json();
+      if (!res.ok) throw new Error("Failed to update risk");
+      const updatedRisk = await res.json();
 
-    // update local state
-    const transformedRisk = transformRisk(updatedRisk);
-    transformedRisk.controlEffectiveness = selectedRisk.controlEffectiveness || [];
-    transformedRisk.evidence = selectedRisk.evidence || [];
+      // update local state
+      const transformedRisk = transformRisk(updatedRisk);
+      transformedRisk.controlEffectiveness = selectedRisk.controlEffectiveness || [];
+      transformedRisk.evidence = selectedRisk.evidence || [];
 
-    setRisks(risks.map((r) => (r.id === selectedRisk.id ? transformedRisk : r)));
-    setIsEditDialogOpen(false);
-    setSelectedRisk(null);
-    toast.success("Risk updated successfully");
-  } catch (error) {
-    console.error("Error updating risk:", error);
-    toast.error("Failed to update risk");
-  } finally {
-    setSubmitting(false);
-  }
-};
+      setRisks(risks.map((r) => (r.id === selectedRisk.id ? transformedRisk : r)));
+      setIsEditDialogOpen(false);
+      setSelectedRisk(null);
+      toast.success("Risk updated successfully");
+    } catch (error) {
+      console.error("Error updating risk:", error);
+      toast.error("Failed to update risk");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-const handleDeleteRisk = async (riskId: string) => {
-  try {
-    const res = await fetch(`/api/iso27001-risks/${riskId}`, {
-      method: "DELETE",
-    });
+  const handleDeleteRisk = async (riskId: string) => {
+    try {
+      const res = await fetch(`/api/iso27001-risks/${riskId}`, {
+        method: "DELETE",
+      });
 
-    if (!res.ok) throw new Error("Failed to delete risk");
+      if (!res.ok) throw new Error("Failed to delete risk");
 
-    // update UI
-    setRisks((prev) => prev.filter((r) => r.id !== Number(riskId)));
-    toast.success("Risk deleted successfully");
-  } catch (error) {
-    console.error("Error deleting risk:", error);
-    toast.error("Failed to delete risk");
-  }
-};
+      // update UI
+      setRisks((prev) => prev.filter((r) => r.id !== Number(riskId)));
+      toast.success("Risk deleted successfully");
+    } catch (error) {
+      console.error("Error deleting risk:", error);
+      toast.error("Failed to delete risk");
+    }
+  };
 
 
   const openEditDialog = (risk: FrontendRisk) => {
@@ -1480,7 +1549,7 @@ const handleDeleteRisk = async (riskId: string) => {
       controls: [],
       controlEffectiveness: [],
       assets: [],
-      controlAssessment: "",
+      existingControls: "",
       riskTreatment: "",
       reviewDate: "",
       residualLikelihood: 1,
@@ -1530,18 +1599,24 @@ const handleDeleteRisk = async (riskId: string) => {
   }
 
   const filteredControlAssetments =
-    risks.length > 0 ? risks.filter((r) =>
-      r.controlAssessment
-        ?.toLowerCase()
-        .includes(newRisk.controlAssessment.toLowerCase())
-    ) : [];
+    risks.length > 0
+      ? risks.filter(
+          (r) =>
+            r.controlAssessment?.toLowerCase().includes(
+              (newRisk.controlAssessment || "").toLowerCase()
+            )
+        )
+      : [];
 
   const filteredTreatmentPlan =
-    risks.length > 0 ? risks.filter((r) =>
-      r.treatmentPlan
-        ?.toLowerCase()
-        .includes(newRisk.treatmentPlan.toLowerCase())
-    ) : [];
+    risks.length > 0
+      ? risks.filter(
+          (r) =>
+            r.treatmentPlan?.toLowerCase().includes(
+              (newRisk.treatmentPlan || "").toLowerCase()
+            )
+        )
+      : [];
 
   const handleSelect = (value: any, type: string) => {
     if (type == 'tp') {
@@ -1617,7 +1692,8 @@ const handleDeleteRisk = async (riskId: string) => {
               <TabsTrigger value="risks">Risk Register</TabsTrigger>
               <TabsTrigger value="dashboard">Risk Dashboard</TabsTrigger>
               <TabsTrigger value="controls">Control Mapping</TabsTrigger>
-              <TabsTrigger value="control-assessment">Control Assessment</TabsTrigger>
+              <TabsTrigger value="control-assessment">Controls Assessment</TabsTrigger>
+              <TabsTrigger value="treatment">Risk Treatment</TabsTrigger>
             </TabsList>
 
             <div className="flex items-center space-x-2">
@@ -1667,10 +1743,11 @@ const handleDeleteRisk = async (riskId: string) => {
               </Button>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="Add Risk" />
+                  {/* <Button size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Risk
-                  </Button>
+                  </Button> */}
                 </DialogTrigger>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
@@ -1766,7 +1843,7 @@ const handleDeleteRisk = async (riskId: string) => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div id="divAssetOwner" className="space-y-2">
-                        <Label htmlFor="owner">Asset Owner *</Label>
+                        <Label htmlFor="owner">Risk Owner *</Label>
                         <OwnerSelectInput formData={newRisk} setFormData={setNewRisk} fieldName="owner" />
                       </div>
                       {/* <div className="space-y-2">
@@ -1796,6 +1873,77 @@ const handleDeleteRisk = async (riskId: string) => {
                         </Select>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div id="divThreat" className="space-y-2">
+                        <Label htmlFor="threat">Threat</Label>
+                        <ThreatSelectInput formData={newRisk} setFormData={setNewRisk} fieldName="threat" />
+                      </div>
+                    </div>
+
+
+                    <div className="space-y-2">
+                      <Label htmlFor="existingControls">Existing Controls</Label>
+                      <div className="space-y-2">
+                        <ControlSelectInput
+                          formData={{ controlSearch: existingControlInput }}
+                          setFormData={(data) => setExistingControlInput(data.controlSearch || "")}
+                          fieldName="controlSearch"
+                          onControlSelected={(control) => {
+                            const controlText = `${control.control_id} - ${control.name}`
+                            addExistingControl(controlText)
+                            setExistingControlInput("")
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Search and select controls from your governance controls database
+                        </p>
+                      </div>
+                      {parseExistingControls(newRisk.existingControls).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {parseExistingControls(newRisk.existingControls).map((control, index) => (
+                            <Badge key={index} variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                              {control}
+                              <X 
+                                className="h-3 w-3 cursor-pointer hover:text-blue-900" 
+                                onClick={() => removeExistingControl(index)} 
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="riskTreatment">Risk Treatment Strategy</Label>
+                      {userRole === "admin" ? (
+                        <Select
+                          value={newRisk.riskTreatment}
+                          onValueChange={(value) => setNewRisk({ ...newRisk, riskTreatment: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select treatment strategy" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {riskTreatmentStrategies.map((strategy) => (
+                              <SelectItem key={strategy} value={strategy.split(" - ")[0]}>
+                                {strategy}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+                          {newRisk.riskTreatment || "Will be set by administrator"}
+                        </div>
+                      )}
+                      {userRole !== "admin" && (
+                        <p className="text-xs text-muted-foreground">
+                          Risk treatment strategy can only be set by administrators
+                        </p>
+                      )}
+                    </div>
+
 
                     <div className="space-y-2">
                       <Label htmlFor="treatmentPlan">Treatment Plan</Label>
@@ -1836,80 +1984,6 @@ const handleDeleteRisk = async (riskId: string) => {
                         >
                           Clear
                         </Button>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="controlAssessment">Control Assessment</Label>
-                      <Textarea
-                        id="controlAssessment"
-                        value={newRisk.controlAssessment || ""}
-                        onChange={(e) => {
-                          setNewRisk({ ...newRisk, controlAssessment: e.target.value });
-                          if (e.target.value.length > 0) {
-                            setShowDropdown(true) // show dropdown on typing
-                          } else {
-                            setShowDropdown(false)
-                          }
-                        }}
-                        placeholder="Assess the effectiveness of existing controls"
-                        rows={2}
-                      />
-
-                      {showDropdown && newRisk.controlAssessment != "" && filteredControlAssetments.length > 0 && (
-                        <div className="border rounded mt-1 max-h-40 overflow-y-auto">
-                          {filteredControlAssetments.map((r, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() => handleSelect(r.controlAssessment, 'ca')}
-                              className="cursor-pointer text-sm p-2 m-2 hover:bg-muted/100 rounded"
-                            >
-                              {r.controlAssessment}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {newRisk.controlAssessment && (
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            setNewRisk({ ...newRisk, controlAssessment: "" })
-                          }
-                          className="text-sm self-end"
-                        >
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="riskTreatment">Risk Treatment Strategy</Label>
-                      {userRole === "admin" ? (
-                        <Select
-                          value={newRisk.riskTreatment}
-                          onValueChange={(value) => setNewRisk({ ...newRisk, riskTreatment: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select treatment strategy" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {riskTreatmentStrategies.map((strategy) => (
-                              <SelectItem key={strategy} value={strategy.split(" - ")[0]}>
-                                {strategy}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="flex items-center h-10 px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-                          {newRisk.riskTreatment || "Will be set by administrator"}
-                        </div>
-                      )}
-                      {userRole !== "admin" && (
-                        <p className="text-xs text-muted-foreground">
-                          Risk treatment strategy can only be set by administrators
-                        </p>
                       )}
                     </div>
 
@@ -1961,6 +2035,7 @@ const handleDeleteRisk = async (riskId: string) => {
                         </div>
                       </div>
                     </div>
+
 
                     <div className="space-y-2">
                       <Label htmlFor="reviewDate">Next Review Date</Label>
@@ -2625,7 +2700,17 @@ const handleDeleteRisk = async (riskId: string) => {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true}
+                                  onView={() => {
+                                    setSelectedRisk(risk)
+                                    setIsViewDialogOpen(true)
+                                  }}
+                                  onEdit={() => openEditDialog(risk)}
+                                  onDelete={() => handleDeleteRisk(risk.id)}
+                                actionObj={risk}
+                                  deleteDialogTitle={risk.title}
+                                />
+                                {/* <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
@@ -2674,7 +2759,7 @@ const handleDeleteRisk = async (riskId: string) => {
                                       </AlertDialogContent>
                                     </AlertDialog>
                                   </>
-                                )}
+                                )} */}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -2856,7 +2941,7 @@ const handleDeleteRisk = async (riskId: string) => {
           <TabsContent value="controls" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>ISO 27001 Control Mapping</CardTitle>
+                <CardTitle>ISO 27001 Existing Controls</CardTitle>
                 <CardDescription>Map risks to ISO 27001 Annex A controls</CardDescription>
               </CardHeader>
               <CardContent>
@@ -3102,6 +3187,38 @@ const handleDeleteRisk = async (riskId: string) => {
                                         : ""
                                     }
                                   />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="existingControls">Existing Controls</Label>
+                                  <div className="space-y-2">
+                                    <ControlSelectInput
+                                      formData={{ controlSearch: editExistingControlInput }}
+                                      setFormData={(data) => setEditExistingControlInput(data.controlSearch || "")}
+                                      fieldName="controlSearch"
+                                      onControlSelected={(control) => {
+                                        const controlText = `${control.control_id} - ${control.name}`
+                                        addEditExistingControl(controlText)
+                                        setEditExistingControlInput("")
+                                      }}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                      Search and select controls from your governance controls database
+                                    </p>
+                                  </div>
+                                  {parseExistingControls(editForm.existingControls).length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {parseExistingControls(editForm.existingControls).map((control, index) => (
+                                        <Badge key={index} variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                                          {control}
+                                          <X 
+                                            className="h-3 w-3 cursor-pointer hover:text-blue-900" 
+                                            onClick={() => removeEditExistingControl(index)} 
+                                          />
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -3442,6 +3559,20 @@ const handleDeleteRisk = async (riskId: string) => {
                                 </div>
                               </div>
                             )}
+
+                            {/* Existing Controls */}
+                            {(risk.existingControls || editingRisk === risk.id) && parseExistingControls(editingRisk === risk.id ? editForm.existingControls : risk.existingControls).length > 0 && (
+                              <div className="mt-4">
+                                <Label className="text-sm font-medium">Existing Controls</Label>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                  {parseExistingControls(editingRisk === risk.id ? editForm.existingControls : risk.existingControls).map((control, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {control}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -3604,6 +3735,10 @@ const handleDeleteRisk = async (riskId: string) => {
               </Pagination>
             </div>
           </TabsContent>
+
+          <TabsContent value="treatment" className="space-y-4">
+            <ISO27001TreatmentTracker />
+          </TabsContent>
         </Tabs>
 
         {/* Admin Edit Risk Dialog */}
@@ -3733,6 +3868,13 @@ const handleDeleteRisk = async (riskId: string) => {
                         <SelectItem value="Accepted">Accepted</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div id="divEditThreat" className="space-y-2">
+                    <Label htmlFor="editThreat">Threat</Label>
+                    <ThreatSelectInput formData={selectedRisk} setFormData={setSelectedRisk} fieldName="threat" />
                   </div>
                 </div>
 
@@ -3922,6 +4064,11 @@ const handleDeleteRisk = async (riskId: string) => {
                       <div>
                         <strong>Owner:</strong> {selectedRisk.owner}
                       </div>
+                      {selectedRisk.threat && (
+                        <div>
+                          <strong>Threat:</strong> {selectedRisk.threat}
+                        </div>
+                      )}
                       <div>
                         <strong>Status:</strong>
                         <Badge variant="outline" className={`ml-2 ${getStatusColor(selectedRisk.status)}`}>
@@ -3968,6 +4115,19 @@ const handleDeleteRisk = async (riskId: string) => {
                   <div>
                     <h3 className="font-semibold mb-2">Control Assessment</h3>
                     <p className="text-sm text-muted-foreground">{selectedRisk.controlAssessment}</p>
+                  </div>
+                )}
+
+                {selectedRisk.existingControls && parseExistingControls(selectedRisk.existingControls).length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Existing Controls</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {parseExistingControls(selectedRisk.existingControls).map((control, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                          {control}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
 

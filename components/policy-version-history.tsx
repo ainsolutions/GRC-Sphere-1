@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
 import { History, Plus, Eye, RotateCcw, Upload, FileText, Download } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface PolicyVersion {
   id: number
@@ -210,10 +211,11 @@ export function PolicyVersionHistory({ policyId, onVersionChange }: PolicyVersio
         <div className="flex space-x-2">
           <Dialog open={isCreateVersionDialogOpen} onOpenChange={setIsCreateVersionDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Create Version" />
+              {/* <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Version
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -325,6 +327,16 @@ export function PolicyVersionHistory({ policyId, onVersionChange }: PolicyVersio
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
+                        <ActionButtons isTableAction={true}
+                          onView={() => {
+                            setSelectedVersion(version)
+                            setIsViewDialogOpen(true)
+                          }}
+                                actionObj={version}
+                        // onEdit={() => {}} 
+                        //onDelete={() => {}}   
+                        //deleteDialogTitle={}                                
+                        />
                         <Button
                           variant="ghost"
                           size="sm"

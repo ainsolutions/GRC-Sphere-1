@@ -37,6 +37,7 @@ import {
   CalendarIcon,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ISO27001Assessment {
   id: number
@@ -447,10 +448,11 @@ export function ISO27001GapAnalysis() {
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="Add Gap Item"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Gap Item
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
               <DialogHeader>

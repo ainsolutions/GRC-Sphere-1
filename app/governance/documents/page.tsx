@@ -36,6 +36,9 @@ import {
   Unlock,
   Loader2,
 } from "lucide-react"
+import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 // Interface for governance document data from API
 interface GovernanceDocument {
@@ -130,8 +133,8 @@ export default function GovernanceDocuments() {
   useEffect(() => {
     let filtered = documents.filter(doc => {
       const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           doc.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+        doc.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (doc.tags && doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
 
       return matchesSearch
     })
@@ -146,7 +149,7 @@ export default function GovernanceDocuments() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-      ...documentData,
+          ...documentData,
           created_by: 'Current User' // This should be replaced with actual user from session
         }),
       })
@@ -155,11 +158,11 @@ export default function GovernanceDocuments() {
 
       if (result.success) {
         await fetchDocuments() // Refresh the documents list
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "Document Created",
-      description: "New document has been successfully created.",
-    })
+        setIsCreateDialogOpen(false)
+        toast({
+          title: "Document Created",
+          description: "New document has been successfully created.",
+        })
       } else {
         toast({
           title: "Error",
@@ -187,7 +190,7 @@ export default function GovernanceDocuments() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-      ...documentData,
+          ...documentData,
           updated_by: 'Current User' // This should be replaced with actual user from session
         }),
       })
@@ -196,12 +199,12 @@ export default function GovernanceDocuments() {
 
       if (result.success) {
         await fetchDocuments() // Refresh the documents list
-    setIsEditDialogOpen(false)
-    setEditingDocument(null)
-    toast({
-      title: "Document Updated",
-      description: "Document has been successfully updated.",
-    })
+        setIsEditDialogOpen(false)
+        setEditingDocument(null)
+        toast({
+          title: "Document Updated",
+          description: "Document has been successfully updated.",
+        })
       } else {
         toast({
           title: "Error",
@@ -229,10 +232,10 @@ export default function GovernanceDocuments() {
 
       if (result.success) {
         await fetchDocuments() // Refresh the documents list
-    toast({
-      title: "Document Deleted",
-      description: "Document has been successfully deleted.",
-    })
+        toast({
+          title: "Document Deleted",
+          description: "Document has been successfully deleted.",
+        })
       } else {
         toast({
           title: "Error",
@@ -309,10 +312,7 @@ export default function GovernanceDocuments() {
               </Button>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Document
-                  </Button>
+                  <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Document" />
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
@@ -482,21 +482,21 @@ export default function GovernanceDocuments() {
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Governance Documents ({filteredDocuments.length})
-                      </CardTitle>
+            </CardTitle>
             <CardDescription>
               Manage governance documents, policies, and procedures
-                      </CardDescription>
-              </CardHeader>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Loading documents...</span>
-                  </div>
+              </div>
             ) : filteredDocuments.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No documents found. Try adjusting your filters or create a new document.
-                  </div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -523,31 +523,31 @@ export default function GovernanceDocuments() {
                           <div className="max-w-xs">
                             <div className="font-semibold truncate" title={document.title}>
                               {document.title}
-                  </div>
+                            </div>
                             <div className="text-sm text-gray-500 truncate" title={document.description}>
                               {document.description}
-                  </div>
+                            </div>
                             {document.tags && document.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {document.tags.slice(0, 2).map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
+                                  <Badge key={index} variant="secondary" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
                                 {document.tags.length > 2 && (
                                   <Badge variant="secondary" className="text-xs">
                                     +{document.tags.length - 2}
                                   </Badge>
                                 )}
-                </div>
+                              </div>
                             )}
-                    </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {getTypeIcon(document.document_type)}
                             <span className="text-sm">{document.document_type}</span>
-                    </div>
+                          </div>
                         </TableCell>
                         <TableCell className="font-mono text-sm">
                           {document.current_version}
@@ -568,8 +568,8 @@ export default function GovernanceDocuments() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm">
-                          {document.file_size ? 
-                            `${(document.file_size / 1024 / 1024).toFixed(1)} MB` : 
+                          {document.file_size ?
+                            `${(document.file_size / 1024 / 1024).toFixed(1)} MB` :
                             'N/A'
                           }
                         </TableCell>
@@ -581,32 +581,24 @@ export default function GovernanceDocuments() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                  </Button>
+                            <ActionButtons isTableAction={true}
+                              onView={() => { }}
+                              onEdit={() => {
+                                setEditingDocument(document)
+                                setIsEditDialogOpen(true)
+                              }}
+                              onDelete={() => handleDeleteDocument(document.id)}
+                                actionObj={document}
+                              deleteDialogTitle={document.title}
+                            />
+
                             {document.file_path && (
-                  <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm">
                                 <Download className="h-4 w-4" />
-                  </Button>
+                              </Button>
                             )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingDocument(document)
-                      setIsEditDialogOpen(true)
-                    }}
-                  >
-                              <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteDocument(document.id)}
-                  >
-                              <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -614,8 +606,8 @@ export default function GovernanceDocuments() {
                 </Table>
               </div>
             )}
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -626,8 +618,8 @@ export default function GovernanceDocuments() {
                 Update the document details and metadata.
               </DialogDescription>
             </DialogHeader>
-            <DocumentForm 
-              document={editingDocument || undefined} 
+            <DocumentForm
+              document={editingDocument || undefined}
               onSubmit={handleEditDocument}
               onCancel={() => {
                 setIsEditDialogOpen(false)
@@ -642,7 +634,7 @@ export default function GovernanceDocuments() {
 }
 
 // Document Form Component
-function DocumentForm({ document, onSubmit, onCancel }: { 
+function DocumentForm({ document, onSubmit, onCancel }: {
   document?: GovernanceDocument
   onSubmit: (data: any) => void
   onCancel?: () => void
@@ -787,33 +779,45 @@ function DocumentForm({ document, onSubmit, onCancel }: {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="document_owner">Document Owner</Label>
-          <Input
-            id="document_owner"
-            value={formData.document_owner}
-            onChange={(e) => setFormData({ ...formData, document_owner: e.target.value })}
-            required
+          <Label htmlFor="document_owner">Document Owner *</Label>
+          <OwnerSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="document_owner"
           />
+          <p className="text-xs text-muted-foreground">
+            Search and select document owner from users
+          </p>
         </div>
         <div>
           <Label htmlFor="department_owner">Department Owner</Label>
-          <Input
-            id="department_owner"
-            value={formData.department_owner}
-            onChange={(e) => setFormData({ ...formData, department_owner: e.target.value })}
-            placeholder="Optional"
+          <DepartmentSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="department_owner"
+            onDepartmentSelected={(department) => {
+              setFormData({
+                ...formData,
+                department_owner: department.name
+              })
+            }}
           />
+          <p className="text-xs text-muted-foreground">
+            Search and select department from organization
+          </p>
         </div>
       </div>
 
       <div>
         <Label htmlFor="approval_authority">Approval Authority</Label>
-        <Input
-          id="approval_authority"
-          value={formData.approval_authority}
-          onChange={(e) => setFormData({ ...formData, approval_authority: e.target.value })}
-          placeholder="Optional"
+        <OwnerSelectInput
+          formData={formData}
+          setFormData={setFormData}
+          fieldName="approval_authority"
         />
+        <p className="text-xs text-muted-foreground">
+          Search and select approval authority from users
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

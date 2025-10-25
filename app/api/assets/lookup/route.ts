@@ -7,7 +7,7 @@ export const GET = withContext(async ({ tenantDb }, request) => {
     const q = searchParams.get("q") || ""
 
     const assets = await tenantDb`
-      SELECT id, asset_id, asset_name, asset_type, criticality
+      SELECT id, asset_id, asset_name, asset_type
       FROM assets
       WHERE asset_name ILIKE ${"%" + q + "%"}
          OR asset_id ILIKE ${"%" + q + "%"}

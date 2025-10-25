@@ -28,6 +28,7 @@ export const GET = withContext(async({tenantDb}: HttpSessionContext, request, { 
         measurement_frequency,
         owner,
         department,
+        departmental_unit,
         calculation_method,
         data_source,
         last_updated,
@@ -83,6 +84,7 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext,request, { p
       measurement_frequency,
       owner,
       department,
+      departmental_unit,
       calculation_method,
       data_source,
       next_review_date
@@ -110,6 +112,7 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext,request, { p
         measurement_frequency = ${measurement_frequency},
         owner = ${owner},
         department = ${department},
+        departmental_unit = ${departmental_unit || null},
         calculation_method = ${calculation_method},
         data_source = ${data_source},
         next_review_date = ${next_review_date},

@@ -32,22 +32,33 @@ const isValidStatus = (status: string): boolean => {
 }
 
 // Helper function to generate finding ID
-const generateFindingId = async (): Promise<string> => {
+const generateFindingId = async (assessmentName: string): Promise<string> => {
+  const currentYear = new Date().getFullYear()
+  
+  // Truncate assessment name to 20 characters and format it
+  const truncatedName = (assessmentName || "UNKNOWN")
+    .substring(0, 20)
+    .trim()
+    .replace(/\s+/g, "-")
+    .toUpperCase()
+  
+  const findingIdPattern = `FIND-${currentYear}-${truncatedName}-%`
   const result = await sql`
     SELECT finding_id FROM assessment_findings 
-    ORDER BY id DESC LIMIT 1
+    WHERE finding_id LIKE ${findingIdPattern}
+    ORDER BY finding_id DESC 
+    LIMIT 1
   `
 
   let nextNumber = 1
   if (result.length > 0) {
     const lastId = result[0].finding_id
-    const match = lastId.match(/FND-(\d+)/)
-    if (match) {
-      nextNumber = Number.parseInt(match[1]) + 1
-    }
+    const parts = lastId.split("-")
+    const numberPart = parts[parts.length - 1]
+    nextNumber = (Number.parseInt(numberPart) || 0) + 1
   }
 
-  return `FND-${nextNumber.toString().padStart(4, "0")}`
+  return `FIND-${currentYear}-${truncatedName}-${nextNumber.toString().padStart(6, "0")}`
 }
 
 export async function importFindingsFromCSV(data: any[]) {
@@ -83,23 +94,26 @@ export async function importFindingsFromCSV(data: any[]) {
 
         // Check if assessment exists (if assessment_id provided)
         let assessmentId = null
+        let assessmentName = "UNKNOWN"
         if (row.assessment_id) {
           const assessment = await sql`
-            SELECT id FROM assessments WHERE id = ${row.assessment_id}
+            SELECT id, assessment_name FROM assessments WHERE id = ${row.assessment_id}
           `
           if (assessment.length === 0) {
             errors.push(`Row ${i + 2}: Assessment with ID ${row.assessment_id} not found`)
             continue
           }
           assessmentId = row.assessment_id
+          assessmentName = assessment[0].assessment_name || "UNKNOWN"
         } else {
           // Try to find assessment by name if provided
           if (row.assessment_name) {
             const assessment = await sql`
-              SELECT id FROM assessments WHERE assessment_name = ${row.assessment_name}
+              SELECT id, assessment_name FROM assessments WHERE assessment_name = ${row.assessment_name}
             `
             if (assessment.length > 0) {
               assessmentId = assessment[0].id
+              assessmentName = assessment[0].assessment_name || "UNKNOWN"
             }
           }
         }
@@ -109,8 +123,8 @@ export async function importFindingsFromCSV(data: any[]) {
           continue
         }
 
-        // Generate finding ID
-        const findingId = await generateFindingId()
+        // Generate finding ID with assessment name
+        const findingId = await generateFindingId(assessmentName)
 
         // Insert finding
         await sql`

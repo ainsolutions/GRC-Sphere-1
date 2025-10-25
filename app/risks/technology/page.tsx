@@ -57,6 +57,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination"
 import StarBorder from "@/app/StarBorder"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 interface TechnologyRisk {
   id: number
@@ -811,9 +812,11 @@ export default function TechnologyRisksPage() {
                 Export
               </Button>
               <TechnologyRiskChatbot onRiskCreated={fetchRisks} />
-              <Button onClick={handleAdd}>
+              <ActionButtons isTableAction={false} onAdd={handleAdd} btnAddText="Add Technology Risk"/>
+              {/* <Button onClick={handleAdd}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Technology Risk
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>

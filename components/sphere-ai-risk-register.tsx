@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Search, Eye, Edit, Trash2, Brain, AlertTriangle, Shield } from "lucide-react"
 import { toast } from "sonner"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface SphereAiRisk {
   id: number
@@ -45,6 +46,10 @@ export function SphereAiRiskRegister() {
   })
   const [selectedRisk, setSelectedRisk] = useState<SphereAiRisk | null>(null)
   const [showDetails, setShowDetails] = useState(false)
+
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [selectedRiskForEdit, setSelectedRiskForEdit] = useState<SphereAiRisk | null>(null)
+
 
   useEffect(() => {
     fetchRisks()
@@ -164,6 +169,35 @@ export function SphereAiRiskRegister() {
     setShowDetails(true)
   }
 
+
+  const handleSaveEdit = async () => {
+    if (!selectedRiskForEdit) return
+
+    try {
+      const response = await fetch(`/api/sphere-ai-risks/${selectedRiskForEdit.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(selectedRiskForEdit),
+      })
+
+      if (!response.ok) throw new Error("Failed to update risk")
+
+      const updatedRisk = await response.json()
+
+      // Update table state
+      setRisks((prev) =>
+        prev.map((risk) => (risk.id === updatedRisk.id ? updatedRisk : risk))
+      )
+
+      toast.success("Risk updated successfully")
+      setShowEditDialog(false)
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to update risk")
+    }
+  }
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -193,7 +227,7 @@ export function SphereAiRiskRegister() {
             </div>
 
             <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-              <SelectTrigger> 
+              <SelectTrigger>
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -285,7 +319,17 @@ export function SphereAiRiskRegister() {
                       <TableCell className="">{formatDate(risk.created_at)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button
+                          <ActionButtons isTableAction={true}
+                            onView={() => handleViewDetails(risk)}
+                            onEdit={() => {
+                              setSelectedRiskForEdit(risk) // <-- select risk for editing
+                              setShowEditDialog(true)       // <-- open edit dialog
+                            }}
+                            onDelete={() => { }}
+                                actionObj={risk}
+                          //deleteDialogTitle={risk.title}
+                          />
+                          {/* <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewDetails(risk)}
@@ -295,6 +339,10 @@ export function SphereAiRiskRegister() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => {
+                              setSelectedRiskForEdit(risk) // <-- select risk for editing
+                              setShowEditDialog(true)       // <-- open edit dialog
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -304,7 +352,7 @@ export function SphereAiRiskRegister() {
                             className="text-red-400 hover:bg-red-900/20 hover:text-red-300 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -394,6 +442,106 @@ export function SphereAiRiskRegister() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Risk: {selectedRiskForEdit?.risk_id}</DialogTitle>
+            <DialogDescription>Update AI risk information</DialogDescription>
+          </DialogHeader>
+
+          {selectedRiskForEdit && (
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={selectedRiskForEdit.title}
+                  onChange={(e) =>
+                    setSelectedRiskForEdit({ ...selectedRiskForEdit, title: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <Input
+                  value={selectedRiskForEdit.description}
+                  onChange={(e) =>
+                    setSelectedRiskForEdit({ ...selectedRiskForEdit, description: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Category, Risk Level, Status */}
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-sm font-medium">Category</label>
+                  <Select
+                    value={selectedRiskForEdit.category}
+                    onValueChange={(value) =>
+                      setSelectedRiskForEdit({ ...selectedRiskForEdit, category: value })
+                    }
+                  >
+                    <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Infrastructure Security">Infrastructure Security</SelectItem>
+                      <SelectItem value="Data Security">Data Security</SelectItem>
+                      <SelectItem value="Application Security">Application Security</SelectItem>
+                      <SelectItem value="Third-party Risk">Third-party Risk</SelectItem>
+                      <SelectItem value="Compliance">Compliance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Risk Level</label>
+                  <Select
+                    value={selectedRiskForEdit.ai_risk_level}
+                    onValueChange={(value) =>
+                      setSelectedRiskForEdit({ ...selectedRiskForEdit, ai_risk_level: value })
+                    }
+                  >
+                    <SelectTrigger><SelectValue placeholder="Risk Level" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Critical">Critical</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={selectedRiskForEdit.status}
+                    onValueChange={(value) =>
+                      setSelectedRiskForEdit({ ...selectedRiskForEdit, status: value })
+                    }
+                  >
+                    <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Under Review">Under Review</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Mitigated">Mitigated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="secondary" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+                <Button variant="default" onClick={handleSaveEdit}>Save</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   )
 }

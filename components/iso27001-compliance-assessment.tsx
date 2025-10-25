@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import { Plus, Eye, Edit, Trash2, CalendarIcon, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ISO27001Assessment {
   id: number
@@ -282,10 +283,11 @@ export function ISO27001ComplianceAssessment() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New Assessment" />
+            {/* <Button>
               <Plus className="mr-2 h-4 w-4" />
               New Assessment
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -426,7 +428,7 @@ export function ISO27001ComplianceAssessment() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium">
               Planned
             </CardTitle>
           </CardHeader>
@@ -531,7 +533,17 @@ export function ISO27001ComplianceAssessment() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedAssessment(assessment)
+                                setIsViewDialogOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={assessment}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -546,7 +558,7 @@ export function ISO27001ComplianceAssessment() {
                             </Button>
                             <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

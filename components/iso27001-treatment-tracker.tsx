@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ISO27001Risk {
   id: number
@@ -249,7 +250,7 @@ export function ISO27001TreatmentTracker() {
               created_by: "Current User",
             }),
           })
-        } catch {}
+        } catch { }
         setIsDialogOpen(false)
         resetPlanForm()
         fetchTreatmentPlans()
@@ -464,17 +465,17 @@ export function ISO27001TreatmentTracker() {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[450px]">
+          <TabsList className="grid w-full grid-cols-2 lg:w-[450px]">
             <TabsTrigger value="plans">Treatment Plans</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           <div className="flex items-center space-x-2">
-            <Button onClick={() => openDialog("plan")}>
+            <ActionButtons isTableAction={false} onAdd={() => openDialog("plan")} btnAddText="New Plan" />
+            {/* <Button onClick={() => openDialog("plan")}>
               <Plus className="h-4 w-4 mr-2" />
               New Plan
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -516,7 +517,7 @@ export function ISO27001TreatmentTracker() {
         </div>
 
         <TabsContent value="plans" className="space-y-4">
-          <Card className="bg-slate-900/50 border-slate-700 backdrop-blur-sm">
+          <Card>
             <CardHeader>
               <CardTitle>ISO 27001 Treatment Plans</CardTitle>
               <CardDescription>Manage risk treatment plans and track their progress</CardDescription>
@@ -562,11 +563,11 @@ export function ISO27001TreatmentTracker() {
                           {plan.residual_risk_level}
                         </Badge>
                       </TableCell>
-                      <TableCell className="flex items-center space-x-2">
-                        <Button variant="outline" onClick={() => openDialog("view", plan)}>
+                      <TableCell className="flex items-center space-x-1">
+                        <Button variant="ghost" onClick={() => openDialog("view", plan)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" onClick={() => openDialog("edit", plan)}>
+                        <Button variant="ghost" onClick={() => openDialog("edit", plan)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -612,9 +613,16 @@ export function ISO27001TreatmentTracker() {
                       <TableCell>{control.assigned_owner}</TableCell>
                       <TableCell>{formatDate(control.due_date)}</TableCell>
                       <TableCell className="flex items-center space-x-2">
-                          <Button variant="outline" onClick={() => openDialog("view", control)}>
+                        <ActionButtons isTableAction={true}
+                          onView={() => openDialog("view", control)}
+                                actionObj={control}
+                        //onEdit={() => {}} 
+                        //onDelete={() => {}}   
+                        //deleteDialogTitle={}                                
+                        />
+                        {/* <Button variant="outline" onClick={() => openDialog("view", control)}>
                           <Eye className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -845,7 +853,7 @@ export function ISO27001TreatmentTracker() {
                   })
                   setIsDialogOpen(false)
                   fetchTreatmentPlans()
-                } catch {}
+                } catch { }
               }}
               className="space-y-4"
             >

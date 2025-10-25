@@ -27,6 +27,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NIS2Remediation {
   id: number
@@ -278,10 +279,11 @@ export function NIS2RemediationTracker({ assessmentId }: NIS2RemediationTrackerP
           </Button>
           <Dialog open={isNewRemediationOpen} onOpenChange={setIsNewRemediationOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add remediation" />
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Remediation
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -632,7 +634,17 @@ export function NIS2RemediationTracker({ assessmentId }: NIS2RemediationTrackerP
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedRemediation(remediation)
+                                setIsDetailOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={remediation}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               className="hover:bg-green-100"
@@ -648,7 +660,7 @@ export function NIS2RemediationTracker({ assessmentId }: NIS2RemediationTrackerP
                             </Button>
                               <Button variant="outline" size="sm" className="hover:bg-red-100">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

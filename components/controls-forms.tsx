@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Edit } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 export function ControlCreateForm({ onSubmit, onCancel, loading }: {
   onSubmit: (data: any) => void
@@ -166,8 +167,9 @@ export function ControlCreateForm({ onSubmit, onCancel, loading }: {
             </>
           ) : (
             <>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Control
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Create Control" />
+              {/* <Plus className="h-4 w-4 mr-2" />
+              Create Control */}
             </>
           )}
         </Button>
@@ -316,8 +318,15 @@ export function ControlEditForm({ control, onSubmit, onCancel, loading }: {
             </>
           ) : (
             <>
-              <Edit className="h-4 w-4 mr-2" />
-              Update Control
+              <ActionButtons isTableAction={true}
+                //onView={() => {}}
+                onEdit={() => {}}
+                                actionObj={formData}
+                //onDelete={() => {}}
+                //deleteDialogTitle={}
+              />
+              {/* <Edit className="h-4 w-4 mr-2" />
+              Update Control */}
             </>
           )}
         </Button>

@@ -647,7 +647,7 @@ export function NISTCSFMitigationRegister() {
         </div>
 
         <div>
-          <Label htmlFor="template_id">Associated Risk Template</Label>
+          <Label htmlFor="template_id">Associated Risk Title</Label>
           <Select
             value={newPlan.template_id}
             onValueChange={(value) => {
@@ -1007,10 +1007,10 @@ export function NISTCSFMitigationRegister() {
               </Select>
               <Select value={templateFilter} onValueChange={setTemplateFilter}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Risk Template" />
+                  <SelectValue placeholder="Risk Title" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Templates</SelectItem>
+                  <SelectItem value="all">All Risks</SelectItem>
                   {riskTemplates.map((template) => (
                     <SelectItem key={template.id} value={template.id.toString()}>
                       {template.template_name}
@@ -1177,7 +1177,7 @@ export function NISTCSFMitigationRegister() {
                   <TableRow>
                     <TableHead className="truncate">Plan ID</TableHead>
                     <TableHead className="truncate">Plan Name</TableHead>
-                    <TableHead className="truncate">Risk Template</TableHead>
+                    <TableHead className="truncate">Risk Title</TableHead>
                     <TableHead className="truncate">Status</TableHead>
                     <TableHead className="truncate">Priority</TableHead>
                     <TableHead className="truncate">Progress</TableHead>
@@ -1427,7 +1427,7 @@ export function NISTCSFMitigationRegister() {
 
               {selectedPlan.template_name && (
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Associated Risk Template</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Associated Risk Title</Label>
                   <div className="mt-1 bg-gray-900 p-3 rounded-lg">
                     <div className="font-medium">{selectedPlan.template_name}</div>
                     <div className="flex items-center gap-2 mt-1">

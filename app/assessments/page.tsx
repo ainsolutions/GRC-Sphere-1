@@ -57,11 +57,18 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { AssetSelector } from "@/components/asset-selector"
+import AssetSelectInput from "@/components/asset-search-input"
+import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import UnitSelectInput from "@/components/unit-search-input"
+import FrameworkSelectInput from "@/components/framework-search-input"
 import StarBorder from "../StarBorder"
 import { ActionButtons } from "@/components/ui/action-buttons"
+import { AssessmentGanttChart } from "@/components/assessment-gantt-chart"
 
 interface Assessment {
   id: string
+  assessmentId?: string
   title: string
   type: string
   framework: string
@@ -71,7 +78,9 @@ interface Assessment {
   endDate: string
   dueDate: string
   assessor: string
+  reviewer?: string
   department: string
+  departmental_unit?: string
   scope: string
   description: string
   progress: number
@@ -112,6 +121,11 @@ export default function AssessmentsPage() {
     asset_id: "",
     asset_name: "",
     model_version: "",
+    asset: "",
+    assessor: "",
+    reviewer: "",
+    department: "",
+    departmental_unit: "",
   })
 
   useEffect(() => {
@@ -155,6 +169,7 @@ export default function AssessmentsPage() {
 
       const mappedAssessments = data.map((assessment: any) => ({
         id: assessment.id.toString(),
+        assessmentId: assessment.assessment_id || "",
         title: assessment.assessment_name || "",
         type: assessment.assessment_type || "",
         framework: assessment.compliance_framework || "",
@@ -164,7 +179,9 @@ export default function AssessmentsPage() {
         endDate: assessment.end_date ? new Date(assessment.end_date).toISOString().split("T")[0] : "",
         dueDate: assessment.end_date ? new Date(assessment.end_date).toISOString().split("T")[0] : "",
         assessor: assessment.assigned_assessor || "",
-        department: "", // Not in database schema
+        department: assessment.department || "",
+        departmental_unit: assessment.departmental_unit || "",
+        reviewer: assessment.reviewer || "",
         scope: assessment.assessment_scope || "",
         description: assessment.assessment_methodology || "",
         progress: assessment.completion_percentage || 0,
@@ -263,17 +280,17 @@ export default function AssessmentsPage() {
 
   const handleAddAssessment = async () => {
     if (!newAssessment.title || !newAssessment.type || !newAssessment.framework) {
-      toast.error("Please fill in all required fields")
-      return
+      toast.error("Please fill in all required fields");
+      return;
     }
 
     if (!selectedAsset) {
-      toast.error("Please select an asset for this assessment")
-      return
+      toast.error("Please select an asset for this assessment");
+      return;
     }
 
     try {
-      setSubmitting(true)
+      setSubmitting(true);
 
       const assessmentData = {
         assessment_name: newAssessment.title,
@@ -294,21 +311,26 @@ export default function AssessmentsPage() {
         asset_id: selectedAsset.asset_id,
         asset_name: selectedAsset.asset_name,
         model_version: selectedAsset.model_version || "",
-      }
+      };
 
       const response = await fetch("/api/assessments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-schema-id": localStorage.getItem("schema_id") || "",
+          "x-current-session": localStorage.getItem("session_data") || "{}",
         },
+        credentials: "include",
         body: JSON.stringify(assessmentData),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to create assessment")
+        const errText = await response.text();
+        console.error("❌ Failed to create assessment:", response.status, errText);
+        throw new Error(errText || "Failed to create assessment");
       }
 
-      await fetchAssessments() // Refresh the list
+      await fetchAssessments(); // Refresh table
       setNewAssessment({
         type: "",
         framework: "",
@@ -322,17 +344,18 @@ export default function AssessmentsPage() {
         asset_id: "",
         asset_name: "",
         model_version: "",
-      })
-      setSelectedAsset(null)
-      setIsAddDialogOpen(false)
-      toast.success("Assessment created successfully")
+      });
+      setSelectedAsset(null);
+      setIsAddDialogOpen(false);
+      toast.success("✅ Assessment created successfully!");
     } catch (error) {
-      console.error("Error creating assessment:", error)
-      toast.error("Failed to create assessment")
+      console.error("Error creating assessment:", error);
+      toast.error("Failed to create assessment");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
+
 
   const handleEditAssessment = async () => {
     if (!selectedAssessment) return
@@ -622,6 +645,7 @@ export default function AssessmentsPage() {
             <TabsTrigger value="assessments">Assessment Register</TabsTrigger>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="planner">Planner</TabsTrigger>
           </TabsList>
 
           <div className="flex items-center space-x-2">
@@ -633,19 +657,26 @@ export default function AssessmentsPage() {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
+            {/* ✅ Add Assessment Dialog */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              {/* 🟢 Use a normal Button for the trigger — not ActionButtons */}
               <DialogTrigger asChild>
-            <ActionButtons isTableAction={false} onAdd={() => {} } btnText="Add Assessment"/>
+            <ActionButtons isTableAction={false} onAdd={() => setIsAddDialogOpen(true)} btnAddText="Add Assessment"/>
                {/*  <Button variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Assessment
-                </Button> */}
+                </Button>
               </DialogTrigger>
-              <DialogContent>
+
+              <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Assessment</DialogTitle>
-                  <DialogDescription>Add a new information security assessment</DialogDescription>
+                  <DialogDescription>
+                    Add a new information security assessment.
+                  </DialogDescription>
                 </DialogHeader>
+
+                {/* 🧾 Form Fields */}
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -653,26 +684,43 @@ export default function AssessmentsPage() {
                       <Input
                         id="title"
                         value={newAssessment.title || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, title: e.target.value })}
+                        onChange={(e) =>
+                          setNewAssessment({ ...newAssessment, title: e.target.value })
+                        }
                         placeholder="Enter assessment title"
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="type">Assessment Type *</Label>
                       <Select
                         value={newAssessment.type}
-                        onValueChange={(value) => setNewAssessment({ ...newAssessment, type: value })}
+                        onValueChange={(value) =>
+                          setNewAssessment({ ...newAssessment, type: value })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Compliance Assessment">Compliance Assessment</SelectItem>
-                          <SelectItem value="Security Assessment">Security Assessment</SelectItem>
-                          <SelectItem value="Privacy Assessment">Privacy Assessment</SelectItem>
-                          <SelectItem value="Risk Assessment">Risk Assessment</SelectItem>
-                          <SelectItem value="Vulnerability Assessment">Vulnerability Assessment</SelectItem>
-                          <SelectItem value="Penetration Test">Penetration Test</SelectItem>
+                          <SelectItem value="Compliance Assessment">
+                            Compliance Assessment
+                          </SelectItem>
+                          <SelectItem value="Security Assessment">
+                            Security Assessment
+                          </SelectItem>
+                          <SelectItem value="Privacy Assessment">
+                            Privacy Assessment
+                          </SelectItem>
+                          <SelectItem value="Risk Assessment">
+                            Risk Assessment
+                          </SelectItem>
+                          <SelectItem value="Vulnerability Assessment">
+                            Vulnerability Assessment
+                          </SelectItem>
+                          <SelectItem value="Penetration Test">
+                            Penetration Test
+                          </SelectItem>
                           <SelectItem value="Internal Audit">Internal Audit</SelectItem>
                           <SelectItem value="External Audit">External Audit</SelectItem>
                         </SelectContent>
@@ -680,40 +728,58 @@ export default function AssessmentsPage() {
                     </div>
                   </div>
 
+                  {/* 🆔 Assessment ID Preview */}
+                  <div className="space-y-2">
+                    <Label htmlFor="assessment_id">Assessment ID</Label>
+                    <Input
+                      id="assessment_id"
+                      value={
+                        newAssessment.type
+                          ? `AS-${new Date().getFullYear()}-${newAssessment.type.split(' ').map((word: string) => word.charAt(0).toUpperCase()).join('').substring(0, 4)}-XXXXX (Auto-generated)`
+                          : "Select assessment type to preview ID format"
+                      }
+                      readOnly
+                      disabled
+                      className="bg-muted cursor-not-allowed"
+                      placeholder="Auto-generated on save"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Format: AS-YYYY-TYPE-XXXXX (Auto-generated on creation)
+                    </p>
+                  </div>
+
+                  {/* 🧠 Framework */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="framework">Framework *</Label>
-                      <Select
-                        value={newAssessment.framework}
-                        onValueChange={(value) => setNewAssessment({ ...newAssessment, framework: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select framework" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ISO 27001">ISO 27001</SelectItem>
-                          <SelectItem value="NIST CSF">NIST CSF</SelectItem>
-                          <SelectItem value="HIPAA">HIPAA</SelectItem>
-                          <SelectItem value="SOC 2">SOC 2</SelectItem>
-                          <SelectItem value="PCI DSS">PCI DSS</SelectItem>
-                          <SelectItem value="GDPR">GDPR</SelectItem>
-                          <SelectItem value="NESA UAE">NESA UAE</SelectItem>
-                          <SelectItem value="SAMA">SAMA</SelectItem>
-                          <SelectItem value="MICA">MICA</SelectItem>
-                          <SelectItem value="NIS2">NIS2</SelectItem>
-                          <SelectItem value="DORA">DORA</SelectItem>
-                          <SelectItem value="Qatar NIA">Qatar NIA</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FrameworkSelectInput
+                        formData={newAssessment}
+                        setFormData={setNewAssessment}
+                        fieldName="framework"
+                        onFrameworkSelected={(framework) => {
+                          setNewAssessment({
+                            ...newAssessment,
+                            framework: framework.version 
+                              ? `${framework.framework_name} (${framework.version})`
+                              : framework.framework_name
+                          })
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Search and select compliance framework (min 2 characters)
+                      </p>
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="priority">Priority</Label>
                       <Select
                         value={newAssessment.priority}
-                        onValueChange={(value) => setNewAssessment({ ...newAssessment, priority: value })}
+                        onValueChange={(value) =>
+                          setNewAssessment({ ...newAssessment, priority: value })
+                        }
                       >
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Low">Low</SelectItem>
@@ -725,34 +791,135 @@ export default function AssessmentsPage() {
                     </div>
                   </div>
 
-                  {/* Asset Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="asset">Asset *</Label>
-                    <AssetSelector
-                      value={selectedAsset}
-                      onChange={(asset) => {
-                        setSelectedAsset(asset)
-                        setNewAssessment({
-                          ...newAssessment,
-                          asset_id: asset?.asset_id || "",
-                          asset_name: asset?.asset_name || "",
-                          model_version: asset?.model_version || ""
-                        })
-                      }}
-                      placeholder="Search and select an asset..."
-                    />
+                  {/* 👤 Assessor and Reviewer */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="assessor">Assessor *</Label>
+                      <OwnerSelectInput
+                        formData={newAssessment}
+                        setFormData={setNewAssessment}
+                        fieldName="assessor"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Search and select assessor from users
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reviewer">Reviewer</Label>
+                      <OwnerSelectInput
+                        formData={newAssessment}
+                        setFormData={setNewAssessment}
+                        fieldName="reviewer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Search and select reviewer from users
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Model/Version Display */}
-                  {selectedAsset && (
+                  {/* 🏢 Department and Unit */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="model_version">Model/Version</Label>
-                      <Input
-                        id="model_version"
-                        value={selectedAsset.model_version || "Not specified"}
-                        readOnly
-                        className="bg-muted"
+                      <Label htmlFor="department">Department *</Label>
+                      <DepartmentSelectInput
+                        formData={newAssessment}
+                        setFormData={setNewAssessment}
+                        fieldName="department"
+                        onDepartmentSelected={(department) => {
+                          setNewAssessment({
+                            ...newAssessment,
+                            department: department.name
+                          })
+                        }}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Search and select department from organization
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="departmental_unit">Departmental Unit</Label>
+                      <UnitSelectInput
+                        formData={newAssessment}
+                        setFormData={setNewAssessment}
+                        fieldName="departmental_unit"
+                        onUnitSelected={(unit) => {
+                          setNewAssessment({
+                            ...newAssessment,
+                            departmental_unit: unit.department_unit || unit.name
+                          })
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Search and select specific unit within department
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 🧩 Asset Search Component */}
+                  <div className="space-y-2">
+                    <Label htmlFor="asset">Asset *</Label>
+                    <AssetSelectInput
+                      formData={newAssessment}
+                      setFormData={setNewAssessment}
+                      fieldName="asset"
+                      onAssetSelected={(asset) => {
+                        setSelectedAsset(asset);
+                        setNewAssessment({
+                          ...newAssessment,
+                          asset: `${asset.asset_name} (${asset.asset_id})`,
+                          asset_id: asset.asset_id || "",
+                          asset_name: asset.asset_name || "",
+                          model_version: asset.model_version || "",
+                        });
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Search and select asset by name or ID (min 3 characters)
+                    </p>
+                  </div>
+
+                  {selectedAsset && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="asset_type">Asset Type</Label>
+                        <Input
+                          id="asset_type"
+                          value={selectedAsset.asset_type || "Not specified"}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="model_version">Model/Version</Label>
+                        <Input
+                          id="model_version"
+                          value={selectedAsset.model_version || "Not specified"}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                      {selectedAsset.classification && (
+                        <div className="space-y-2">
+                          <Label htmlFor="classification">Classification</Label>
+                          <Input
+                            id="classification"
+                            value={selectedAsset.classification}
+                            readOnly
+                            className="bg-muted"
+                          />
+                        </div>
+                      )}
+                      {selectedAsset.owner && (
+                        <div className="space-y-2">
+                          <Label htmlFor="asset_owner">Asset Owner</Label>
+                          <Input
+                            id="asset_owner"
+                            value={selectedAsset.owner}
+                            readOnly
+                            className="bg-muted"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -761,86 +928,39 @@ export default function AssessmentsPage() {
                     <Textarea
                       id="description"
                       value={newAssessment.description || ""}
-                      onChange={(e) => setNewAssessment({ ...newAssessment, description: e.target.value })}
+                      onChange={(e) =>
+                        setNewAssessment({
+                          ...newAssessment,
+                          description: e.target.value,
+                        })
+                      }
                       placeholder="Describe the assessment scope and objectives"
                       rows={3}
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="assessor">Assessor</Label>
-                      <Input
-                        id="assessor"
-                        value={newAssessment.assessor || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, assessor: e.target.value })}
-                        placeholder="Lead assessor name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="department">Department</Label>
-                      <Input
-                        id="department"
-                        value={newAssessment.department || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, department: e.target.value })}
-                        placeholder="Responsible department"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="scope">Scope</Label>
-                    <Input
-                      id="scope"
-                      value={newAssessment.scope || ""}
-                      onChange={(e) => setNewAssessment({ ...newAssessment, scope: e.target.value })}
-                      placeholder="Assessment scope"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startDate">Start Date</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={newAssessment.startDate || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, startDate: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="endDate">End Date</Label>
-                      <Input
-                        id="endDate"
-                        type="date"
-                        value={newAssessment.endDate || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, endDate: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dueDate">Due Date</Label>
-                      <Input
-                        id="dueDate"
-                        type="date"
-                        value={newAssessment.dueDate || ""}
-                        onChange={(e) => setNewAssessment({ ...newAssessment, dueDate: e.target.value })}
-                      />
-                    </div>
-                  </div>
                 </div>
+
+                {/* ✅ Dialog Footer */}
+              <div>
+             
+              <Dialog>
+                  <DialogContent>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button onClick={handleAddAssessment} disabled={submitting}>
-                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {submitting && (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    )}
                     Create Assessment
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+
           </div>
-        </div>
+        
 
         <TabsContent value="assessments" className="space-y-4">
           {/* Filters */}
@@ -963,7 +1083,9 @@ export default function AssessmentsPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{assessment.title}</div>
-                            <div className="text-sm text-muted-foreground">{assessment.id}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {assessment.assessmentId || assessment.id}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="truncate">
@@ -1016,6 +1138,7 @@ export default function AssessmentsPage() {
                               }} 
                               onEdit={() => openEditDialog(assessment)} 
                               onDelete={() => handleDeleteAssessment(assessment.id)}
+                              actionObj={assessment}
                               deleteDialogTitle={assessment.title}                           
                               />
                             {/* <Button
@@ -1175,6 +1298,24 @@ export default function AssessmentsPage() {
           <div className="p-4">
             <p>Reports Tab Content</p>
           </div>
+        </TabsContent>
+
+        <TabsContent value="planner" className="space-y-4">
+          <AssessmentGanttChart 
+            assessments={assessments.map(a => ({
+              id: Number(a.id),
+              assessment_id: a.assessmentId || a.id,
+              name: a.title,
+              type: a.type,
+              status: a.status,
+              priority: a.priority,
+              start_date: a.startDate,
+              end_date: a.endDate,
+              assessor: a.assessor,
+              progress: a.progress,
+              organization: a.department
+            }))}
+          />
         </TabsContent>
       </Tabs>
     </div>

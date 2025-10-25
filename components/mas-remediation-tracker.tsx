@@ -34,6 +34,7 @@ import {
   Users,
 } from "lucide-react"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MASRemediationItem {
   id: string
@@ -325,10 +326,11 @@ export function MASRemediationTracker({ assessmentId }: { assessmentId?: string 
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Remediation Item" />
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Remediation Item
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -417,7 +419,7 @@ export function MASRemediationTracker({ assessmentId }: { assessmentId?: string 
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="assigned_to">Assigned To</Label>
-                    <OwnerSelectInput formData={newItem} setFormData={setNewItem} fieldName="assigned_to"/>
+                    <OwnerSelectInput formData={newItem} setFormData={setNewItem} fieldName="assigned_to" />
                     {/* <Input
                       id="assigned_to"
                       value={newItem.assigned_to}
@@ -463,7 +465,7 @@ export function MASRemediationTracker({ assessmentId }: { assessmentId?: string 
                   </Button>
                   <Button
                     onClick={handleCreateItem}
-                    
+
                   >
                     Create Item
                   </Button>
@@ -580,7 +582,17 @@ export function MASRemediationTracker({ assessmentId }: { assessmentId?: string 
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedItem(item)
+                                setIsViewDialogOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={item}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -595,7 +607,7 @@ export function MASRemediationTracker({ assessmentId }: { assessmentId?: string 
                             </Button>
                             <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

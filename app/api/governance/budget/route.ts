@@ -46,6 +46,7 @@ export const GET = withContext(async({ tenantDb}: HttpSessionContext, request) =
         status,
         budget_owner,
         department,
+        departmental_unit,
         cost_center,
         vendor,
         contract_reference,
@@ -94,6 +95,7 @@ export const POST = withContext(async ({ tenantDb}: HttpSessionContext,request) 
       status = "on-track",
       budget_owner,
       department,
+      departmental_unit,
       cost_center,
       vendor,
       contract_reference,
@@ -114,11 +116,13 @@ export const POST = withContext(async ({ tenantDb}: HttpSessionContext,request) 
       INSERT INTO governance_budget (
         category, subcategory, description, fiscal_year, allocated_amount,
         spent_amount, committed_amount, status, budget_owner, department,
-        cost_center, vendor, contract_reference, approval_date, approval_authority, notes
+        departmental_unit, cost_center, vendor, contract_reference, approval_date, 
+        approval_authority, notes
       ) VALUES (
         ${category}, ${subcategory}, ${description}, ${fiscal_year}, ${allocated_amount},
         ${spent_amount}, ${committed_amount}, ${status}, ${budget_owner}, ${department},
-        ${cost_center}, ${vendor}, ${contract_reference}, ${approval_date}, ${approval_authority}, ${notes}
+        ${departmental_unit || null}, ${cost_center}, ${vendor}, ${contract_reference}, 
+        ${approval_date}, ${approval_authority}, ${notes}
       ) RETURNING *
     `
     

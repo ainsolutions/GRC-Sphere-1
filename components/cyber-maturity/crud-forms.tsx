@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2, Plus, Edit, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import OwnerSelectInput from "../owner-search-input"
+import { ActionButtons } from "../ui/action-buttons"
 
 // Types
 interface CRIControl {
@@ -253,44 +255,32 @@ export function CRIControlForm({ control, onClose, onSuccess }: {
 
         <DialogFooter>
           {control?.id && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" className="mr-auto">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete CRI Control</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this CRI control? This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <ActionButtons isTableAction={true} onDelete={() => handleDelete()}
+              deleteDialogTitle={control.control_name}
+                                actionObj={control}
+            />
           )}
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? (
+          {
+            loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                 Saving...
               </>
-            ) : (
+            ) :
+            (
               <>
-                {control?.id ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                {control?.id ? "Update" : "Create"}
+              { control?.id ? 
+                  <ActionButtons isTableAction={true} onEdit={() => {}} 
+                                actionObj={control}/> + 'Update' 
+                  : <ActionButtons isTableAction={false} btnAddText="Create"/> 
+              }
               </>
-            )}
+            )
+          }
           </Button>
         </DialogFooter>
       </form>
@@ -496,18 +486,24 @@ export function MaturityAssessmentForm({ assessment, assessments, controls, onCl
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? (
+          {
+            loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                 Saving...
               </>
-            ) : (
+            ) :
+            (
               <>
-                {assessment?.id ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                {assessment?.id ? "Update" : "Create"}
+              { assessment?.id ? 
+                  <ActionButtons isTableAction={true} onEdit={() => {}} 
+                                actionObj={assessment}/> + 'Update' 
+                  : <ActionButtons isTableAction={false} btnAddText="Create"/> 
+              }
               </>
-            )}
-          </Button>
+            )
+          }          
+          </Button> 
         </DialogFooter>
       </form>
     </DialogContent>
@@ -719,18 +715,24 @@ export function GapAnalysisForm({ gap, assessments, controls, onClose, onSuccess
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
+          <Button  type="submit" disabled={loading}>
+          {
+            loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Saving...
+               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                 Saving...
               </>
-            ) : (
+            ) :
+            (
               <>
-                {gap?.id ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                {gap?.id ? "Update" : "Create"}
+              { gap?.id ? 
+                  <ActionButtons isTableAction={true} onEdit={() => {}} 
+                                actionObj={gap}/> + 'Update' 
+                  : <ActionButtons isTableAction={false} btnAddText="Create"/> 
+              }
               </>
-            )}
+            )
+          }          
           </Button>
         </DialogFooter>
       </form>
@@ -862,6 +864,7 @@ export function RemediationTrackingForm({ remediation, gaps, onClose, onSuccess 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="assigned_to">Assigned To *</Label>
+            <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName="assigned_to" />
             <Input
               id="assigned_to"
               value={formData.assigned_to}
@@ -935,8 +938,12 @@ export function RemediationTrackingForm({ remediation, gaps, onClose, onSuccess 
               </>
             ) : (
               <>
-                {remediation?.id ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                {remediation?.id ? "Update" : "Create"}
+                  {
+                    remediation?.id ?
+                      <ActionButtons isTableAction={true} onEdit={() => { }} 
+                                actionObj={remediation}/> + 'Update'
+                      : <ActionButtons isTableAction={false} btnAddText="Create" />
+                  }
               </>
             )}
           </Button>

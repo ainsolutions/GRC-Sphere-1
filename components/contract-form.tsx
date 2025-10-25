@@ -129,64 +129,26 @@ export function ContractForm({ contract, onSubmit, onCancel, isLoading = false }
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm()) return
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    setSubmitting(true)
+    const payload = {
+      contract_name: formData.contract_name.trim(),
+      contract_type: formData.contract_type.trim(),
+      vendor_id: Number(formData.vendor_id),
+      contract_value: formData.contract_value ? Number(formData.contract_value) : null,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
+      status: formData.status,
+      description: formData.description,
+      sla_requirements: formData.sla_requirements,
+      compliance_requirements: formData.compliance_requirements,
+      renewal_terms: formData.renewal_terms,
+    };
 
-    try {
-      const payload = {
-        contract_name: formData.contract_name.trim(),
-        contract_type: formData.contract_type.trim(),
-        vendor_id: Number(formData.vendor_id),
-        contract_value: formData.contract_value ? Number(formData.contract_value) : null,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        status: formData.status,
-        description: formData.description,
-        sla_requirements: formData.sla_requirements,
-        compliance_requirements: formData.compliance_requirements,
-        renewal_terms: formData.renewal_terms,
-      }
-
-      console.log("Submitting contract:", payload)
-
-      const response = await fetch("/api/contracts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Contract created successfully",
-        })
-        onSubmit(result.contract)
-      } else {
-        console.error("Failed to create contract:", result.error)
-        toast({
-          title: "Error",
-          description: result.error || "Failed to create contract",
-          variant: "destructive",
-        })
-        setErrors({ form: result.error || "Failed to create contract" })
-      }
-    } catch (error) {
-      console.error("Error submitting contract:", error)
-      toast({
-        title: "Error",
-        description: "Network error, please try again",
-        variant: "destructive",
-      })
-      setErrors({ form: "Network error, please try again" })
-    } finally {
-      setSubmitting(false)
-    }
-  }
+    onSubmit(payload); // ✅ just call the parent's handler
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

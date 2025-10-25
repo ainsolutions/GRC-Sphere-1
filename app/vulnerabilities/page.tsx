@@ -35,6 +35,7 @@ import {
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import ConversationChatbot from "@/components/conversation-chatbot"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
@@ -1001,6 +1002,81 @@ export default function VulnerabilitiesPage() {
     }
   }
 
+  // AI-Calculated EPSS handlers
+  const [aiEpssUpdating, setAiEpssUpdating] = useState(false)
+
+  const handleAIEPSSUpdate = async (vulnerabilityId?: number) => {
+    setAiEpssUpdating(true)
+    try {
+      if (vulnerabilityId) {
+        // Single vulnerability calculation
+        const response = await fetch('/api/vulnerabilities/epss/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vulnerability_id: vulnerabilityId }),
+        })
+        const result = await response.json()
+        
+        if (result.success) {
+          toast({
+            title: "AI EPSS Score Calculated",
+            description: `EPSS Score: ${(result.epss_score * 100).toFixed(2)}% | Risk Factors Analyzed`,
+          })
+          fetchVulnerabilities()
+        } else {
+          toast({
+            title: "AI EPSS Calculation Failed",
+            description: result.error || "Failed to calculate EPSS score",
+            variant: "destructive",
+          })
+        }
+      } else {
+        // Batch calculation for all open vulnerabilities
+        const openVulns = vulnerabilities.filter(
+          v => v.remediation_status === 'Open' || v.remediation_status === 'In Progress'
+        )
+        
+        if (openVulns.length === 0) {
+          toast({
+            title: "No Vulnerabilities",
+            description: "No open vulnerabilities to calculate EPSS scores for",
+          })
+          return
+        }
+
+        const vulnerability_ids = openVulns.map(v => v.id)
+        const response = await fetch('/api/vulnerabilities/epss/calculate', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vulnerability_ids }),
+        })
+        const result = await response.json()
+        
+        if (result.success) {
+          toast({
+            title: "AI EPSS Batch Calculation Complete",
+            description: `Processed ${result.total} vulnerabilities: ${result.successful} successful, ${result.failed} failed`,
+          })
+          fetchVulnerabilities()
+        } else {
+          toast({
+            title: "Batch EPSS Calculation Failed",
+            description: result.error || "Failed to calculate EPSS scores",
+            variant: "destructive",
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "AI EPSS Calculation Error",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setAiEpssUpdating(false)
+    }
+  }
+
   const handleSingleEPSSUpdate = async (cveId: string, forceRefresh: boolean = false) => {
     try {
       const result = await updateSingleEPSSScore(cveId, forceRefresh)
@@ -1755,6 +1831,16 @@ export default function VulnerabilitiesPage() {
                         <RefreshCw className={`h-4 w-4 ${epssUpdating ? 'animate-spin' : ''}`} />
                         {epssUpdating ? 'Updating EPSS...' : 'Update EPSS Scores'}
                       </Button>
+
+                      <Button
+                        variant="default"
+                        onClick={() => handleAIEPSSUpdate()}
+                        className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                        disabled={aiEpssUpdating}
+                      >
+                        <Zap className={`h-4 w-4 ${aiEpssUpdating ? 'animate-pulse' : ''}`} />
+                        {aiEpssUpdating ? 'Calculating AI EPSS...' : 'Calculate AI EPSS Scores'}
+                      </Button>
                     </div>
                   </div>
 
@@ -1962,7 +2048,7 @@ export default function VulnerabilitiesPage() {
                                   </TableCell>
                                   <TableCell>
                                     <div className="space-y-2 min-w-[120px]">
-                                      {vulnerability.cve_id && vulnerability.epss_score ? (
+                                      {vulnerability.epss_score ? (
                                         <>
                                           <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-1">
@@ -1981,42 +2067,22 @@ export default function VulnerabilitiesPage() {
                                           <div className="text-xs text-muted-foreground">
                                             {formatEPSSPercentile(vulnerability.epss_percentile)}
                                           </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-xs text-muted-foreground">
-                                              {vulnerability.epss_last_updated
-                                                ? `Updated ${new Date(vulnerability.epss_last_updated).toLocaleDateString()}`
-                                                : 'Never updated'
-                                              }
-                                            </span>
-                                            {vulnerability.cve_id && (
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 w-6 p-0"
-                                                onClick={() => handleSingleEPSSUpdate(vulnerability.cve_id, true)}
-                                                title="Refresh EPSS Score"
-                                              >
-                                                <RefreshCw className="h-3 w-3" />
-                                              </Button>
-                                            )}
+                                          <div className="text-xs text-muted-foreground">
+                                            {vulnerability.epss_last_updated
+                                              ? `Updated ${new Date(vulnerability.epss_last_updated).toLocaleDateString()}`
+                                              : 'Never updated'
+                                            }
                                           </div>
                                         </>
-                                      ) : vulnerability.cve_id ? (
-                                        <div className="flex flex-col items-center gap-2">
-                                          <span className="text-xs text-muted-foreground">No EPSS data</span>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-6 text-xs px-2"
-                                            onClick={() => handleSingleEPSSUpdate(vulnerability.cve_id, false)}
-                                          >
-                                            <Zap className="h-3 w-3 mr-1" />
-                                            Get Score
-                                          </Button>
-                                        </div>
                                       ) : (
-                                        <div className="flex items-center justify-center">
-                                          <span className="text-xs text-muted-foreground">No CVE ID</span>
+                                        <div className="flex flex-col items-center gap-1">
+                                          <div className="flex items-center gap-1 text-muted-foreground">
+                                            <Zap className="h-3 w-3" />
+                                            <span className="text-xs">Not calculated</span>
+                                          </div>
+                                          <span className="text-xs text-muted-foreground">
+                                            Use ⚡ in Actions
+                                          </span>
                                         </div>
                                       )}
                                     </div>
@@ -2027,7 +2093,7 @@ export default function VulnerabilitiesPage() {
                                     </span>
                                   </TableCell>
                                   <TableCell>
-                                    <div className="flex space-x-2">
+                                    <div className="flex space-x-1">
                                       <Button
                                         variant="ghost"
                                         size="sm"
@@ -2035,13 +2101,25 @@ export default function VulnerabilitiesPage() {
                                           setEditingVulnerability(vulnerability)
                                           setIsDialogOpen(true)
                                         }}
+                                        title="Edit vulnerability"
                                       >
                                         <Edit className="h-4 w-4" />
                                       </Button>
                                       <Button
                                         variant="ghost"
                                         size="sm"
+                                        onClick={() => handleAIEPSSUpdate(vulnerability.id)}
+                                        title="Calculate AI EPSS Score"
+                                        disabled={aiEpssUpdating}
+                                        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                      >
+                                        <Zap className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => handleDelete(vulnerability.id)}
+                                        title="Delete vulnerability"
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
@@ -2262,6 +2340,7 @@ export default function VulnerabilitiesPage() {
           </Dialog>
         </div>
       </div>
+      <ConversationChatbot autoOpen={true} />
     </main>
   )
 }

@@ -1,4 +1,4 @@
-"use client";
+"use server";
 
 /**
  * Generic fetch helper for client-side API calls
@@ -136,7 +136,15 @@ export async function listGapsAnalysis(assessmentId?: number) {
   return apiFetch(`/api/cyber-maturity/gaps-analysis${q}`);
 }
 
-export async function createGapAnalysis(payload: any, p0: { assessment_id: any; control_id: any; gap_description: any; severity: any; priority: any; estimated_effort: any; recommended_actions: any; }) {
+export async function createGapAnalysis(payload: {
+  assessment_id: number
+  control_id: number
+  gap_description: string
+  severity: string
+  priority: string
+  estimated_effort: string
+  recommended_actions: string
+}) {
   return apiFetch("/api/cyber-maturity/gaps-analysis", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

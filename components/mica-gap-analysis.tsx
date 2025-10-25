@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Plus, Search, Edit, Trash2, AlertTriangle, CheckCircle, Clock, Users, HelpCircle } from "lucide-react"
 import { toast } from "sonner"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MICAAssessment {
   id: string
@@ -325,7 +326,7 @@ export function MICAGapAnalysis() {
   return (
     <div className="space-y-6">
       {/* Header */}
-        <Card>
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -337,10 +338,11 @@ export function MICAGapAnalysis() {
             <div className="flex space-x-2">
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="New Gap Analysis" />
+                  {/* <Button>
                     <Plus className="mr-2 h-4 w-4" />
                     New Gap Analysis
-                  </Button>
+                  </Button> */}
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
@@ -754,7 +756,7 @@ export function MICAGapAnalysis() {
       </Card>
 
       {/* Gap Analysis Table */}
-          <Card>
+      <Card>
         <CardHeader>
           <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Gap Analysis Results ({filteredGapAnalyses.length})
@@ -803,12 +805,19 @@ export function MICAGapAnalysis() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-1">
-                        <Button variant="outline" size="sm" onClick={() => setEditingItem(gap)}>
+                        <ActionButtons isTableAction={true}
+                          //onView={() => {}} 
+                          onEdit={() => setEditingItem(gap)}
+                          onDelete={() => handleDeleteGap(gap.id)}
+                          deleteDialogTitle={gap.assessment_name}
+                                actionObj={gap}
+                        />
+                        {/* <Button variant="outline" size="sm" onClick={() => setEditingItem(gap)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDeleteGap(gap.id)}>
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       </div>
                     </TableCell>
                   </TableRow>

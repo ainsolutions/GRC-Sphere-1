@@ -26,6 +26,7 @@ import {
 import { createBulkFindings, getAssessments, type FindingFormData } from "@/lib/actions/findings-actions"
 import { toast } from "sonner"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface Assessment {
   id: number
@@ -39,6 +40,7 @@ interface Assessment {
 
 interface BulkFindingData extends Omit<FindingFormData, "assessment_id"> {
   id: string // temporary ID for form management
+  finding_reference?: string
 }
 
 interface BulkFindingsFormProps {
@@ -60,6 +62,7 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
       status: "Open",
       assigned_to: "",
       due_date: "",
+      finding_reference: "",
     },
   ])
 
@@ -75,6 +78,16 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
     if (selectedAssessmentId && assessments.length > 0) {
       const assessment = assessments.find((a) => a.id === selectedAssessmentId)
       setSelectedAssessment(assessment || null)
+      
+      // Auto-generate finding references when assessment changes
+      if (assessment) {
+        setFindings((prevFindings) =>
+          prevFindings.map((finding, index) => ({
+            ...finding,
+            finding_reference: generateFindingReference(assessment, index),
+          }))
+        )
+      }
     }
   }, [selectedAssessmentId, assessments])
 
@@ -95,6 +108,19 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
     }
   }
 
+  const generateFindingReference = (assessment: Assessment, index: number) => {
+    const currentYear = new Date().getFullYear()
+    
+    // Truncate assessment name to 20 characters and replace spaces with dashes
+    const truncatedName = (assessment.assessment_name || "UNKNOWN")
+      .substring(0, 20)
+      .trim()
+      .replace(/\s+/g, "-")
+      .toUpperCase()
+    
+    return `FIND-${currentYear}-${truncatedName}-${String(index + 1).padStart(6, "0")}`
+  }
+
   const addFinding = () => {
     const newFinding: BulkFindingData = {
       id: Date.now().toString(),
@@ -106,6 +132,9 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
       status: "Open",
       assigned_to: "",
       due_date: "",
+      finding_reference: selectedAssessment 
+        ? generateFindingReference(selectedAssessment, findings.length) 
+        : "",
     }
     setFindings([...findings, newFinding])
   }
@@ -119,12 +148,15 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
   const duplicateFinding = (id: string) => {
     const findingToDuplicate = findings.find((f) => f.id === id)
     if (findingToDuplicate) {
+      const index = findings.findIndex((f) => f.id === id)
       const duplicated: BulkFindingData = {
         ...findingToDuplicate,
         id: Date.now().toString(),
         finding_title: `${findingToDuplicate.finding_title} (Copy)`,
+        finding_reference: selectedAssessment 
+          ? generateFindingReference(selectedAssessment, index + 1) 
+          : "",
       }
-      const index = findings.findIndex((f) => f.id === id)
       const newFindings = [...findings]
       newFindings.splice(index + 1, 0, duplicated)
       setFindings(newFindings)
@@ -164,6 +196,7 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
         status: f.status,
         assigned_to: f.assigned_to,
         due_date: f.due_date,
+        finding_reference: f.finding_reference,
       }))
 
       const result = await createBulkFindings(findingsToCreate)
@@ -185,6 +218,7 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
             status: "Open",
             assigned_to: "",
             due_date: "",
+            finding_reference: "",
           },
         ])
 
@@ -334,10 +368,11 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
                 </CardTitle>
                 <CardDescription>Add multiple findings using the same template</CardDescription>
               </div>
-              <Button type="button" onClick={addFinding} variant="outline" size="sm">
+              <ActionButtons isTableAction={false} onAdd={addFinding} btnAddText="Add Finding"/>
+              {/* <Button type="button" onClick={addFinding} variant="outline" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Finding
-              </Button>
+              </Button> */}
             </div>
           </CardHeader>
           <CardContent>
@@ -373,7 +408,12 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
                               <Copy className="h-4 w-4" />
                             </Button>
                             {findings.length > 1 && (
-                              <Button
+                              <ActionButtons isTableAction={true}  
+                                  onDelete={() => removeFinding(finding.id)}   
+                                  deleteDialogTitle={finding.finding_title}  
+                                actionObj={finding}                              
+                                  />
+                              /* <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
@@ -381,7 +421,7 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
                                 title="Remove this finding"
                               >
                                 <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
+                              </Button> */
                             )}
                           </div>
                         </div>
@@ -389,6 +429,18 @@ export function BulkFindingsForm({ onSuccess, onCancel }: BulkFindingsFormProps)
                       <CardContent className="space-y-4">
                         {/* Basic Information */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="md:col-span-2">
+                            <Label htmlFor={`reference-${finding.id}`}>Finding Reference</Label>
+                            <Input
+                              id={`reference-${finding.id}`}
+                              value={finding.finding_reference || ""}
+                              readOnly
+                              disabled
+                              placeholder="Auto-generated when assessment is selected"
+                              className="bg-muted"
+                            />
+                          </div>
+                          
                           <div className="md:col-span-2">
                             <Label htmlFor={`title-${finding.id}`}>Finding Title *</Label>
                             <Input

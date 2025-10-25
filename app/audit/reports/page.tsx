@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Download, Plus, Eye, Edit, Trash2, AlertTriangle, CheckCircle, Clock, FileDown, FileUp, Printer, Share } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 interface AuditReport {
   id: number
@@ -328,7 +329,7 @@ export default function AuditReportsPage() {
         method: 'GET'
       })
       const data = await response.json()
-      
+
       if (data.success) {
         // In a real implementation, you would trigger the download
         alert(`Report exported successfully as ${format.toUpperCase()}`)
@@ -526,10 +527,11 @@ export default function AuditReportsPage() {
                   </div>
                   <Dialog open={isCreateReportDialogOpen} onOpenChange={setIsCreateReportDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Create Report" />
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Report
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -690,7 +692,7 @@ export default function AuditReportsPage() {
                           <TableCell>{report.engagement_name}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
-                              {report.report_type.replace('_', ' ').split(' ').map(word => 
+                              {report.report_type.replace('_', ' ').split(' ').map(word =>
                                 word.charAt(0).toUpperCase() + word.slice(1)
                               ).join(' ')}
                             </Badge>
@@ -710,28 +712,35 @@ export default function AuditReportsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleExportReport(report.report_id, 'pdf')}
                                 disabled={isExporting}
                               >
                                 <FileDown className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleExportReport(report.report_id, 'docx')}
                                 disabled={isExporting}
                               >
                                 <FileUp className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  onEdit={() => {}} 
+                                actionObj={report}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={report.report_title}                                
+                                  />
+                              {/* <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -754,10 +763,11 @@ export default function AuditReportsPage() {
                   </div>
                   <Dialog open={isCreateFindingDialogOpen} onOpenChange={setIsCreateFindingDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Finding" />
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Finding
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -917,7 +927,7 @@ export default function AuditReportsPage() {
                           </TableCell>
                           <TableCell>
                             <Badge className={getFindingStatusColor(finding.status)}>
-                              {finding.status.replace('-', ' ').split(' ').map(word => 
+                              {finding.status.replace('-', ' ').split(' ').map(word =>
                                 word.charAt(0).toUpperCase() + word.slice(1)
                               ).join(' ')}
                             </Badge>
@@ -928,12 +938,19 @@ export default function AuditReportsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
+                              <ActionButtons isTableAction={true}
+                                onView={() => {}}
+                                onEdit={() => {}}
+                                actionObj={finding}
+                                //onDelete={() => {}}
+                                //deleteDialogTitle={finding.finding_name}
+                              />
+                              {/* <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>

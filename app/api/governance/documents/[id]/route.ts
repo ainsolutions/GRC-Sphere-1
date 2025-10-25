@@ -27,7 +27,7 @@ export const GET = withContext(async({tenantDb}: HttpSessionContext, request, { 
         file_size,
         mime_type,
         document_owner,
-        department,
+        department as department_owner,
         approval_authority,
         effective_date,
         last_review_date,
@@ -70,17 +70,12 @@ export const GET = withContext(async({tenantDb}: HttpSessionContext, request, { 
   }
 });
 
-export const PUT = withContext(async({tenantDb}: HttpSessionContext, request, { params }: { params: { id: string } }) => {
-  try {
-    if (!tenantDb) {
-      return NextResponse.json(
-        { success: false, error: "Database not configured" },
-        { status: 500 }
-      )
-    }
-    const { id } = params
-    const body = await request.json()
 
+export const PUT = withContext(async ({ tenantDb }: HttpSessionContext, request, routeContext) => {
+  try {
+    const { id } = routeContext.params; // ✅ No await needed now
+
+    const body = await request.json();
     const {
       title,
       document_type,
@@ -94,7 +89,7 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext, request, { 
       file_size,
       mime_type,
       document_owner,
-      department,
+      department_owner,
       approval_authority,
       effective_date,
       last_review_date,
@@ -108,16 +103,19 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext, request, { 
       change_history,
       approval_workflow,
       compliance_requirements,
-      updated_by
-    } = body
+      updated_by,
+    } = body;
 
-    // Validate required fields
     if (!title || !document_type || !version || !category || !document_owner) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
-      )
+      );
     }
+
+    // ✅ Convert arrays to Postgres array literals safely
+    const toPgArray = (arr: any) =>
+      Array.isArray(arr) && arr.length > 0 ? `{${arr.map((v) => `"${v}"`).join(",")}}` : "{}";
 
     const result = await tenantDb`
       UPDATE governance_documents SET
@@ -133,45 +131,44 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext, request, { 
         file_size = ${file_size},
         mime_type = ${mime_type},
         document_owner = ${document_owner},
-        department = ${department},
+        department = ${department_owner},
         approval_authority = ${approval_authority},
         effective_date = ${effective_date},
         last_review_date = ${last_review_date},
         next_review_date = ${next_review_date},
         review_frequency = ${review_frequency},
-        related_documents = ${JSON.stringify(related_documents)},
-        applicable_frameworks = ${JSON.stringify(applicable_frameworks)},
-        tags = ${JSON.stringify(tags)},
+        related_documents = ${toPgArray(related_documents)},
+        applicable_frameworks = ${toPgArray(applicable_frameworks)},
+        tags = ${toPgArray(tags)},
         confidentiality_level = ${confidentiality_level},
-        distribution_list = ${JSON.stringify(distribution_list)},
-        change_history = ${JSON.stringify(change_history)},
-        approval_workflow = ${JSON.stringify(approval_workflow)},
-        compliance_requirements = ${JSON.stringify(compliance_requirements)},
+        distribution_list = ${toPgArray(distribution_list)},
+        change_history = ${toPgArray(change_history)},
+        approval_workflow = ${toPgArray(approval_workflow)},
+        compliance_requirements = ${toPgArray(compliance_requirements)},
         updated_by = ${updated_by},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
-      RETURNING *
-    `
+      RETURNING *;
+    `;
 
-    const resultArray = Array.isArray(result) ? result : [result];
-    if (resultArray.length === 0) {
+    if (!Array.isArray(result) || result.length === 0) {
       return NextResponse.json(
         { success: false, error: "Document not found" },
         { status: 404 }
-      )
+      );
     }
 
     return NextResponse.json({
       success: true,
-      data: resultArray[0],
-      message: "Document updated successfully"
-    })
-  } catch (error) {
-    console.error("Error updating document:", error)
+      data: result[0],
+      message: "Document updated successfully",
+    });
+  } catch (error: any) {
+    console.error("🔥 Error updating document:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to update document" },
+      { success: false, error: error.message || "Failed to update document" },
       { status: 500 }
-    )
+    );
   }
 });
 

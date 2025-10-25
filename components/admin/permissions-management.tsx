@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Key } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getPermissions, deletePermission } from "@/lib/actions/permission-actions"
 import { PermissionForm } from "./permission-form"
+import { ActionButtons } from "../ui/action-buttons"
 
 export function PermissionsManagement() {
   const [permissions, setPermissions] = useState<any[]>([])
@@ -102,10 +103,7 @@ export function PermissionsManagement() {
               <CardTitle>Permission Management</CardTitle>
               <CardDescription>Manage system permissions and access levels</CardDescription>
             </div>
-            <Button onClick={() => setShowPermissionForm(true)} className="gradient-bg text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Permission
-            </Button>
+            <ActionButtons isTableAction={false} onAdd={() => setShowPermissionForm(true)} btnAddText="Add Permission"/>
           </div>
         </CardHeader>
         <CardContent>
@@ -113,10 +111,7 @@ export function PermissionsManagement() {
             <div className="text-center py-8">
               <Key className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500 mb-4">No permissions found</p>
-              <Button onClick={() => setShowPermissionForm(true)} className="gradient-bg text-white">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Permission
-              </Button>
+            <ActionButtons isTableAction={false} onAdd={() => setShowPermissionForm(true)} btnAddText="Add First Permission"/>
             </div>
           ) : (
             <Table>
@@ -148,21 +143,18 @@ export function PermissionsManagement() {
                     <TableCell>{new Date(permission.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
+                        <ActionButtons isTableAction={true}
+                          onEdit={() => {
                             setEditingPermission(permission)
                             setShowPermissionForm(true)
                           }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {!permission.is_system_permission && (
-                          <Button size="sm" variant="destructive" onClick={() => handleDeletePermission(permission.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
+                                actionObj={permission}
+                        />
+                        {!permission.is_system_permission && (<ActionButtons isTableAction={true} 
+                                  onDelete={() => handleDeletePermission(permission.id)}   
+                                  deleteDialogTitle={permission.permission_type}  
+                                actionObj={permission}                              
+                                  />) }
                       </div>
                     </TableCell>
                   </TableRow>

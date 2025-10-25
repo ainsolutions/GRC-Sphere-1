@@ -10,6 +10,8 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
       p.name          AS page_name,
       p.path          AS page_path,
       p.module        AS module,
+      p.priority      AS priority,
+  p.parent_id         AS parent_id,
       p.icon        AS icon,
       rpa.can_read,
       rpa.can_create,
@@ -39,6 +41,8 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
     canCreate: row.can_create,
     canUpdate: row.can_update,
     canDelete: row.can_delete,
+    parent_id: row.parent_id,
+    priority: row.priority,
   }));
 
 }

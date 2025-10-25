@@ -19,8 +19,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { ContractForm } from "@/components/contract-form"
-import { FileText, DollarSign, Calendar, AlertTriangle, Plus, Search, Edit, Trash2 } from "lucide-react"
+import { FileText, DollarSign, Calendar, AlertTriangle, Plus, Search, Edit, Trash2, Contact } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface Contract {
   id: number
@@ -386,21 +387,12 @@ export function ContractManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-between">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditContract(contract)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteContract(contract)}
-                            className="text-red-400 hover:bg-red-900/20 hover:text-red-300 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <ActionButtons isTableAction={true}
+                            onEdit={() => handleEditContract(contract)}
+                            onDelete={() => handleDeleteContract(contract)}
+                            deleteDialogTitle={contract.contract_name}
+                                actionObj={contract}
+                          />
                         </div>
                       </TableCell>
                     </TableRow>
@@ -409,10 +401,7 @@ export function ContractManagement() {
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8">
                       <p className="text-muted-foreground">No contracts found</p>
-                      <Button onClick={handleCreateContract} className="mt-2">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Contract
-                      </Button>
+                      <ActionButtons isTableAction={false} onAdd={handleCreateContract} btnAddText="Add Your First Contract"/>                      
                     </TableCell>
                   </TableRow>
                 )}

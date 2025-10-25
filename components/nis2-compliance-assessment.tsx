@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { NIS2RemediationTracker } from "./nis2-remediation-tracker"
 import { NIS2SelfAssessment } from "./nis2-self-assessment"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NIS2Assessment {
   id: number
@@ -343,10 +344,11 @@ export function NIS2ComplianceAssessment() {
           </Button>
           <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New NIS2 Assessment"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New NIS2 Assessment
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -657,7 +659,18 @@ export function NIS2ComplianceAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true} 
+                                  onView={() => {
+                                    setSelectedAssessment(assessment)
+                                    setIsAssessmentDetailOpen(true)
+                                  }} 
+                                  onEdit={() => {}} 
+                                  onDelete={() => {}}  
+                                actionObj={assessment} 
+                                  //deleteDialogTitle={}                                
+                                  />
+                                
+                                {/* <Button
                                   variant="outline"
                                   size="sm"
                                   className="hover:bg-green-100"
@@ -673,7 +686,7 @@ export function NIS2ComplianceAssessment() {
                                 </Button>
                                 <Button variant="outline" size="sm" className="hover:bg-red-100">
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

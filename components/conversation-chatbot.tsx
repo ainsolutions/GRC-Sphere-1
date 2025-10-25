@@ -344,7 +344,7 @@ export default function ConversationChatbot({ className = "", autoOpen = false }
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="p-4 border-t">
+          <div className="p-4 border-t overflow-y-auto">
             {showPromptTemplates && (
               <div className="mb-4 border rounded-lg p-3 bg-gray-50">
                 <div className="flex items-center justify-between mb-2">
@@ -376,7 +376,7 @@ export default function ConversationChatbot({ className = "", autoOpen = false }
               </Button>
             </div>
 
-            <div className="flex gap-2 bg-white">
+            <div className="flex gap-2">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}

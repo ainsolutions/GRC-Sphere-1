@@ -23,6 +23,7 @@ import { DatabaseTableForm } from "./database-table-form"
 import { DatabaseTableViewDialog } from "./database-table-view-dialog"
 import { toast } from "@/components/ui/use-toast"
 import { Search, Plus, Edit, Trash2, Eye, Database, Shield } from "lucide-react"
+import { ActionButtons } from "../ui/action-buttons"
 
 interface DatabaseTable {
   id: number
@@ -178,10 +179,11 @@ export function DatabaseTablesManagement() {
         </div>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white">
+            <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="Add Table"/>
+            {/* <Button className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Table
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -229,13 +231,14 @@ export function DatabaseTablesManagement() {
                   : "Get started by adding your first database table."}
               </p>
               {!searchTerm && moduleFilter === "all" && (
-                <Button
+                <ActionButtons isTableAction={false} onAdd={()=>{setShowForm(true)}} btnAddText="Add Database Table"/>
+                /* <Button
                   onClick={() => setShowForm(true)}
                   className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Database Table
-                </Button>
+                </Button> */
               )}
             </CardContent>
           </Card>
@@ -288,7 +291,14 @@ export function DatabaseTablesManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => setViewingTable(table)}>
+                        <ActionButtons isTableAction={true} 
+                                  onView={() => {setViewingTable(table)}} 
+                                  onEdit={() => {setEditingTable(table)}} 
+                                  onDelete={() => {handleDelete(table.id)}}   
+                                  deleteDialogTitle={table.display_name}       
+                                actionObj={table}                         
+                                  />
+                        {/* <Button variant="ghost" size="sm" onClick={() => setViewingTable(table)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Dialog>
@@ -332,7 +342,7 @@ export function DatabaseTablesManagement() {
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog>
+                        </AlertDialog> */}
                       </div>
                     </TableCell>
                   </TableRow>

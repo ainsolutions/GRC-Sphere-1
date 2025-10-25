@@ -23,6 +23,7 @@ import {
   Calendar,
   GitBranch
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface VersionHistoryProps {
   documentId: number
@@ -331,10 +332,11 @@ export function DocumentVersionHistory({ documentId, documentTitle, onVersionCha
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Version"/>
+              {/* <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 New Version
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>

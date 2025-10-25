@@ -11,11 +11,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, Plus, Search, Filter, Eye, Edit, Trash2, AlertTriangle, CheckCircle, Clock, Users, DollarSign, Target } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 interface AnnualPlan {
   id: number
@@ -335,7 +335,7 @@ export default function AuditPlanningPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Plans</CardTitle>
-                <Calendar className="h-4 w-4 text-blue-600" />
+                <CalendarIcon className="h-4 w-4 text-blue-600" /> 
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{annualPlans.length}</div>
@@ -399,10 +399,11 @@ export default function AuditPlanningPage() {
                   </div>
                   <Dialog open={isCreatePlanDialogOpen} onOpenChange={setIsCreatePlanDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="Create Plan"/>
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Plan
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -529,12 +530,19 @@ export default function AuditPlanningPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  onEdit={() => {}} 
+                                actionObj={plan}
+                                  //onDelete={() => handleDeleteAsset(asset)}   
+                                  //deleteDialogTitle={plan.plan_name}                                
+                                  />
+                              {/* <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -557,10 +565,11 @@ export default function AuditPlanningPage() {
                   </div>
                   <Dialog open={isCreateEngagementDialogOpen} onOpenChange={setIsCreateEngagementDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="Create Engagement"/>
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Engagement
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -780,12 +789,19 @@ export default function AuditPlanningPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  onEdit={() => {}} 
+                                actionObj={engagement}
+                                  //onDelete={() => handleDeleteAsset(asset)}   
+                                  //deleteDialogTitle={engagement.engagement_name}                                
+                                  />
+                              {/* <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm">
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>

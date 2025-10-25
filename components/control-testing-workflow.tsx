@@ -28,6 +28,7 @@ import {
   scheduleControlTest,
 } from "@/lib/actions/control-testing-actions"
 import { toast } from "@/components/ui/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ControlTestingWorkflowProps {
   control: any
@@ -411,9 +412,16 @@ export function ControlTestingWorkflow({ control, onClose }: ControlTestingWorkf
                           {test.next_test_date ? new Date(test.next_test_date).toLocaleDateString() : "Not Set"}
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">
+                          <ActionButtons isTableAction={true}
+                            onView={() => {}}
+                                actionObj={test}
+                            //onEdit={() => {}}
+                            //onDelete={() => {}}
+                            //deleteDialogTitle={}
+                          />
+                          {/* <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -432,10 +440,11 @@ export function ControlTestingWorkflow({ control, onClose }: ControlTestingWorkf
             </div>
             <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Create Test Plan" />
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Create Test Plan
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-3xl">
                 <DialogHeader>

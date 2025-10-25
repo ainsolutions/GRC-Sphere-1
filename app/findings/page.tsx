@@ -631,7 +631,8 @@ export default function FindingsPage() {
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
               <Button>
-                <FileStack className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
+                {/* <FileStack className="mr-2 h-4 w-4" /> */}
                 Add Findings
               </Button>
             </DialogTrigger>

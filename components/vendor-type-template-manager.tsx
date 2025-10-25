@@ -37,6 +37,7 @@ import {
   Save,
   X,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 const iconMap = {
   Cloud,
@@ -306,9 +307,8 @@ export function VendorTypeTemplateManager() {
               return (
                 <Card
                   key={vendorType.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedVendorType?.id === vendorType.id ? "ring-2 ring-blue-500" : ""
-                  }`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${selectedVendorType?.id === vendorType.id ? "ring-2 ring-blue-500" : ""
+                    }`}
                   onClick={() => handleVendorTypeSelect(vendorType)}
                 >
                   <CardContent className="p-4">
@@ -339,10 +339,11 @@ export function VendorTypeTemplateManager() {
                 <h2 className="text-xl font-semibold">{selectedVendorType.name} Templates</h2>
                 <Dialog open={showNewTemplateDialog} onOpenChange={setShowNewTemplateDialog}>
                   <DialogTrigger asChild>
-                    <Button>
+                    <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Template" />
+                    {/* <Button>
                       <Plus className="h-4 w-4 mr-2" />
                       Add Template
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
@@ -549,12 +550,19 @@ export function VendorTypeTemplateManager() {
                                 </div>
                               </div>
                               <div className="flex space-x-2">
-                                <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)}>
+                                <ActionButtons isTableAction={true}
+                                  //onView={() => {}} 
+                                  onEdit={() => { setEditingTemplate(template) }}
+                                  onDelete={() => handleDeleteTemplate(template.id)}
+                                  deleteDialogTitle={template.category_name}
+                                actionObj={template}
+                                />
+                                {/* <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button variant="outline" size="sm" onClick={() => handleDeleteTemplate(template.id)}>
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </div>
                           </div>

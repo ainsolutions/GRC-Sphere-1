@@ -26,6 +26,7 @@ import { getThreats } from "@/lib/actions/threat-actions"
 import { getVulnerabilities } from "@/lib/actions/vulnerability-actions"
 import { getAssets } from "@/lib/actions/asset-actions"
 import { searchThreats as searchThreatsAction } from "@/lib/actions/threat-actions"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NISTCSFTemplateFormProps {
   template?: any
@@ -258,13 +259,13 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
   const selectThreat = (threat: any) => {
     const currentSources = [...formData.threat_sources];
     const lastIndex = currentSources.length - 1;
-    
+
     // Set the selected threat name in the current input
     currentSources[lastIndex] = threat.name;
-    
+
     // Add a new empty field for the next threat
     currentSources.push("");
-    
+
     setFormData({ ...formData, threat_sources: currentSources });
     setThreatSearchTerm("");
     setShowThreatDropdown(false);
@@ -641,14 +642,14 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-blue-600" />
-                NIST CSF Template Information
+                NIST CSF Risk Information
               </CardTitle>
-              <CardDescription>Create risk templates aligned with NIST Cybersecurity Framework 2.0</CardDescription>
+              <CardDescription>Create risk aligned with NIST Cybersecurity Framework 2.0</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="template_name">Template Name *</Label>
+                  <Label htmlFor="template_name">Risk Title *</Label>
                   <Input
                     id="template_name"
                     value={formData.template_name}
@@ -794,7 +795,7 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           onChange={(e) => {
                             const value = e.target.value;
                             handleArrayFieldChange("threat_sources", index, value);
-                            
+
                             // Only trigger search for the last (active) input
                             if (index === formData.threat_sources.length - 1) {
                               handleThreatSearch(value);
@@ -827,9 +828,8 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                               {threatSearchResults.map((threat: any, threatIndex) => (
                                 <div
                                   key={threat.id}
-                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
-                                    selectedThreatIndex === threatIndex ? "bg-blue-50 border-blue-200" : ""
-                                  }`}
+                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${selectedThreatIndex === threatIndex ? "bg-blue-50 border-blue-200" : ""
+                                    }`}
                                   onClick={() => selectThreat(threat)}
                                 >
                                   <div className="flex flex-col">
@@ -841,15 +841,14 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                                       </Badge>
                                       <Badge
                                         variant="outline"
-                                        className={`text-xs ${
-                                          threat.threat_level === "Critical"
+                                        className={`text-xs ${threat.threat_level === "Critical"
                                             ? "border-red-500 text-red-700"
                                             : threat.threat_level === "High"
                                               ? "border-orange-500 text-orange-700"
                                               : threat.threat_level === "Medium"
                                                 ? "border-yellow-500 text-yellow-700"
                                                 : "border-green-500 text-green-700"
-                                        }`}
+                                          }`}
                                       >
                                         {threat.threat_level || "Unknown"}
                                       </Badge>
@@ -866,22 +865,30 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           )}
                       </div>
                       {formData.threat_sources.length > 1 && (
-                        <Button
+                        <ActionButtons isTableAction={true}
+                          // onView={() => {}} 
+                          // onEdit={() => {}} 
+                          onDelete={() => removeArrayField("threat_sources", index)}
+                          actionObj={index}
+                        //deleteDialogTitle={}                                
+                        />
+                        {/* <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => removeArrayField("threat_sources", index)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       )}
                     </div>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("threat_sources")}>
+                <ActionButtons isTableAction={false} onAdd={() => addArrayField("threat_sources")} btnAddText="Add Threat Source" />
+                {/* <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("threat_sources")}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Threat Source
-                </Button>
+                </Button> */}
               </CardContent>
             </Card>
 
@@ -891,7 +898,7 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                   <Shield className="h-4 w-4" />
                   Vulnerabilities
                 </CardTitle>
-              <CardDescription>Add multiple vulnerabilities with search assistance</CardDescription>
+                <CardDescription>Add multiple vulnerabilities with search assistance</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {formData.vulnerabilities.map((item: string, index: number) => (
@@ -929,9 +936,8 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                               {vulnerabilitySearchResults.map((vulnerability: any, vulnIndex) => (
                                 <div
                                   key={vulnerability.id}
-                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
-                                    selectedVulnerabilityIndex === vulnIndex ? "bg-blue-50 border-blue-200" : ""
-                                  }`}
+                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${selectedVulnerabilityIndex === vulnIndex ? "bg-blue-50 border-blue-200" : ""
+                                    }`}
                                   onClick={() => selectVulnerability(vulnerability)}
                                 >
                                   <div className="flex flex-col">
@@ -962,22 +968,30 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           )}
                       </div>
                       {formData.vulnerabilities.length > 1 && (
-                        <Button
+                        <ActionButtons isTableAction={true}
+                          // onView={() => {}} 
+                          // onEdit={() => {}} 
+                          onDelete={() => removeArrayField("vulnerabilities", index)}
+                          actionObj={index}
+                        //deleteDialogTitle={}                                
+                        />
+                        {/* <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => removeArrayField("vulnerabilities", index)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       )}
                     </div>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("vulnerabilities")}>
+                <ActionButtons isTableAction={false} onAdd={() => addArrayField("vulnerabilities")} btnAddText="Add Vulnerability" />
+                {/* <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("vulnerabilities")}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Vulnerability
-                </Button>
+                </Button> */}
               </CardContent>
             </Card>
 
@@ -1023,9 +1037,8 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                               {assetSearchResults.map((asset: any, assetIndex) => (
                                 <div
                                   key={asset.id}
-                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${
-                                    selectedAssetIndex === assetIndex ? "bg-blue-50 border-blue-200" : ""
-                                  }`}
+                                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0 ${selectedAssetIndex === assetIndex ? "bg-blue-50 border-blue-200" : ""
+                                    }`}
                                   onClick={() => selectAsset(asset)}
                                 >
                                   <div className="flex flex-col">
@@ -1058,22 +1071,30 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           )}
                       </div>
                       {formData.asset_types.length > 1 && (
-                        <Button
+                        <ActionButtons isTableAction={true}
+                          // onView={() => {}} 
+                          // onEdit={() => {}} 
+                          onDelete={() => removeArrayField("asset_types", index)}
+                          actionObj={index}
+                        //deleteDialogTitle={}                                
+                        />
+                        {/* <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => removeArrayField("asset_types", index)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                       )}
                     </div>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("asset_types")}>
+                <ActionButtons isTableAction={false} onAdd={() => addArrayField("asset_types")} btnAddText="Add Asset Type" />
+                {/* <Button type="button" variant="outline" size="sm" onClick={() => addArrayField("asset_types")}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Asset Type
-                </Button>
+                </Button> */}
               </CardContent>
             </Card>
 
@@ -1097,7 +1118,14 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           className="flex-1"
                         />
                         {formData[field].length > 1 && (
-                          <Button
+                          <ActionButtons isTableAction={true}
+                            // onView={() => {}} 
+                            // onEdit={() => {}} 
+                            onDelete={() => removeArrayField("field", index)}
+                          actionObj={index}
+                          //deleteDialogTitle={}                                
+                          />
+                          {/* <Button
                             type="button"
                             variant="outline"
                             size="sm"
@@ -1105,13 +1133,14 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
+                        )} */}
                       </div>
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => addArrayField(field)}>
+                    <ActionButtons isTableAction={false} onAdd={() => addArrayField(field)} btnAddText={`Add ${label.replace(" Types", "")}`} />
+                    {/* <Button type="button" variant="outline" size="sm" onClick={() => addArrayField(field)}>
                       <Plus className="h-4 w-4 mr-1" />
                       Add {label.replace(" Types", "")}
-                    </Button>
+                    </Button> */}
                   </CardContent>
                 </Card>
               ),
@@ -1138,9 +1167,16 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                       <Shield className="h-4 w-4" />
                       Control {index + 1}
                     </h4>
-                    <Button type="button" variant="outline" size="sm" onClick={() => removeControl(index)}>
+                    <ActionButtons isTableAction={true}
+                      // onView={() => {}} 
+                      // onEdit={() => {}} 
+                      onDelete={() => removeControl(index)}
+                          actionObj={index}
+                    //deleteDialogTitle={}                                
+                    />
+                    {/* <Button type="button" variant="outline" size="sm" onClick={() => removeControl(index)}>
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
 
                   <div className="space-y-2">
@@ -1248,10 +1284,11 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={addControl}>
+              <ActionButtons isTableAction={false} onAdd={addControl} btnAddText="Add Control" />
+              {/* <Button type="button" variant="outline" size="sm" onClick={addControl}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Control
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1275,9 +1312,16 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                       <Target className="h-4 w-4" />
                       Scenario {index + 1}
                     </h4>
-                    <Button type="button" variant="outline" size="sm" onClick={() => removeScenario(index)}>
+                    <ActionButtons isTableAction={true}
+                      // onView={() => {}} 
+                      // onEdit={() => {}} 
+                      onDelete={() => removeScenario(index)}
+                          actionObj={index}
+                    //deleteDialogTitle={}                                
+                    />
+                    {/* <Button type="button" variant="outline" size="sm" onClick={() => removeScenario(index)}>
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1377,10 +1421,11 @@ export function NISTCSFTemplateForm({ template, onSuccess, onCancel }: NISTCSFTe
                   </div>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={addScenario}>
+              <ActionButtons isTableAction={false} onAdd={addScenario} btnAddText="Add Scenerio" />
+              {/* <Button type="button" variant="outline" size="sm" onClick={addScenario}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Scenario
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </TabsContent>

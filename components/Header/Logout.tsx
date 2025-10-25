@@ -13,8 +13,12 @@ export const LogoutButton = () => {
           "Content-Type": "application/json",
         },
       });
-      router.push("/login");
-    } catch (error) { }
+      
+      localStorage.removeItem("session");
+      window.location.href = '/login';
+    } catch (error) { 
+      window.location.href = '/login';
+    }
   };
 
 

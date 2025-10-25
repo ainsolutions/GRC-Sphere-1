@@ -48,6 +48,8 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import StarBorder from "../StarBorder"
+import { ActionButtons } from "@/components/ui/action-buttons"
+import OwnerSelectInput from "@/components/owner-search-input"
 
 interface CyberMaturityAssessment {
   id?: number
@@ -140,6 +142,19 @@ export default function CyberMaturityPage() {
   const [isCreateRemediationOpen, setIsCreateRemediationOpen] = useState(false)
   const [selectedGapForRemediation, setSelectedGapForRemediation] = useState<number | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [editingRemediationId, setEditingRemediationId] = useState<number | null>(null);
+
+  const [isCreateGapDialogOpen, setIsCreateGapDialogOpen] = useState(false)
+  const [manualGapForm, setManualGapForm] = useState({
+    assessment_id: "",
+    control_id: "",
+    gap_description: "",
+    severity: "medium",
+    priority: "medium",
+    estimated_effort: "",
+    recommended_actions: ""
+  })
+
 
   // Set mounted state to fix hydration issues
   useEffect(() => {
@@ -594,7 +609,7 @@ export default function CyberMaturityPage() {
   }
 
   const handleControlAssessment = async () => {
-    if (!selectedAssessmentForControls || !selectedControl) return
+    if (!selectedAssessmentForControls || !selectedControl) return;
 
     try {
       // First, create the maturity assessment
@@ -608,68 +623,68 @@ export default function CyberMaturityPage() {
           target_maturity_level: controlAssessmentForm.target_level,
           assessment_date: controlAssessmentForm.assessment_date,
           assessor_comments: controlAssessmentForm.comments,
-          evidence: controlAssessmentForm.evidence
-        })
-      })
+          evidence: controlAssessmentForm.evidence,
+        }),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (result.success) {
         // If there's a gap (current level < target level), create a gap record
         if (controlAssessmentForm.current_level < controlAssessmentForm.target_level) {
           // Validate required gap fields
           if (!controlAssessmentForm.gap_description || !controlAssessmentForm.estimated_effort) {
-            toast.error("Gap description and estimated effort are required when a gap is detected")
-            return
+            toast.error("Gap description and estimated effort are required when a gap is detected");
+            return;
           }
 
           // Auto-generate gap description if not provided
-          const gapDescription = controlAssessmentForm.gap_description ||
-            `Current maturity level (${controlAssessmentForm.current_level}) is below target level (${controlAssessmentForm.target_level}) for ${selectedControl.control_name}`
+          const gapDescription =
+            controlAssessmentForm.gap_description ||
+            `Current maturity level (${controlAssessmentForm.current_level}) is below target level (${controlAssessmentForm.target_level}) for ${selectedControl.control_name}`;
 
           // Determine priority based on severity
-          let priority: 'low' | 'medium' | 'high' | 'critical' = 'medium'
-          if (controlAssessmentForm.gap_severity === 'critical') priority = 'critical'
-          else if (controlAssessmentForm.gap_severity === 'high') priority = 'high'
-          else if (controlAssessmentForm.gap_severity === 'low') priority = 'low'
+          let priority: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+          if (controlAssessmentForm.gap_severity === 'critical') priority = 'critical';
+          else if (controlAssessmentForm.gap_severity === 'high') priority = 'high';
+          else if (controlAssessmentForm.gap_severity === 'low') priority = 'low';
 
           // Create the gap record
           const gapResponse = await fetch('/api/gaps-analysis', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              assessment_id: selectedAssessmentForControls,
+              assessment_id: selectedAssessmentForControls ?? 2, // fallback for safety
               control_id: selectedControl.id,
               gap_description: gapDescription,
               severity: controlAssessmentForm.gap_severity,
-              priority: priority,
+              priority,
               estimated_effort: controlAssessmentForm.estimated_effort,
-              recommended_actions: controlAssessmentForm.recommended_actions || `Implement maturity level ${controlAssessmentForm.target_level} practices for ${selectedControl.control_name}`
-            })
-          })
+              recommended_actions: controlAssessmentForm.recommended_actions,
+            }),
+          });
 
-          const gapResult = await gapResponse.json()
+          const gapResult = await gapResponse.json();
 
           if (gapResult.success) {
-            toast.success("Control assessment and gap analysis created successfully")
-            loadGapsAnalysis()
+            toast.success("Control assessment and gap analysis created successfully");
+            loadGapsAnalysis();
           } else {
-            toast.warning("Control assessment created but gap analysis failed")
+            toast.warning("Control assessment created but gap analysis failed");
           }
-        } else {
-          toast.success("Control assessment created successfully")
         }
 
-        setIsAssessDialogOpen(false)
-        loadMaturityAssessments()
+        setIsAssessDialogOpen(false);
+        loadMaturityAssessments();
       } else {
-        toast.error(result.error || "Failed to create control assessment")
+        toast.error(result.error || "Failed to create control assessment");
       }
     } catch (error) {
-      console.error("Error creating control assessment:", error)
-      toast.error("Failed to create control assessment")
+      console.error("Error creating control assessment:", error);
+      toast.error("Failed to create control assessment");
     }
-  }
+  };
+
 
   const handleCreateRemediation = async () => {
     try {
@@ -785,6 +800,81 @@ export default function CyberMaturityPage() {
       notes: ""
     })
   }
+
+  const handleEditRemediation = (remediation) => {
+    setEditingRemediationId(remediation.id);
+    setRemediationForm({
+      gap_id: remediation.gap_id,
+      remediation_plan: remediation.remediation_plan,
+      assigned_to: remediation.assigned_to,
+      due_date: remediation.due_date.split("T")[0],
+      status: remediation.status,
+      notes: remediation.notes || "",
+    });
+    setIsCreateRemediationOpen(true);
+  };
+
+
+  const handleCompleteRemediation = async (id: number) => {
+    try {
+      const response = await fetch(`/api/remediation-tracking/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "completed",
+          actual_completion_date: new Date().toISOString(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Remediation marked as completed");
+
+        // ✅ Update local state without reload
+        setRemediationTracking((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, status: "completed" } : r
+          )
+        );
+
+        // Optionally still reload from API if needed
+        // await loadRemediationTracking();
+      } else {
+        toast.error(result.error || "Failed to complete remediation");
+      }
+    } catch (error) {
+      console.error("Error completing remediation:", error);
+      toast.error("Error completing remediation");
+    }
+  };
+
+  const handleUpdateRemediation = async (id: number) => {
+    try {
+      const response = await fetch(`/api/remediation-tracking/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(remediationForm),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Remediation updated successfully");
+        setIsCreateRemediationOpen(false);
+        setEditingRemediationId(null);
+        resetRemediationForm();
+        loadRemediationTracking();
+      } else {
+        toast.error(result.error || "Failed to update remediation");
+      }
+    } catch (error) {
+      console.error("Error updating remediation:", error);
+      toast.error("Failed to update remediation");
+    }
+  };
+
+
 
   const generateGapsFromAssessments = async () => {
     if (!selectedAssessmentForControls) return
@@ -1169,10 +1259,11 @@ export default function CyberMaturityPage() {
 
                   <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
+                      <ActionButtons isTableAction={false} onAdd={() => setIsCreateDialogOpen(true)} btnAddText="New Assessment" />
+                      {/* <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         New Assessment
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[600px]">
                       <DialogHeader>
@@ -1326,7 +1417,16 @@ export default function CyberMaturityPage() {
                             <TableCell>{getStatusBadge(assessment.status)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center gap-2 justify-end">
-                                <Button
+
+                                <ActionButtons isTableAction={true}
+                                  //onView={() => handleViewAsset(asset)}
+                                  onEdit={() => openEditDialog(assessment)}
+                                  onDelete={() => assessment.id && handleDeleteAssessment(assessment.id)}
+                                  actionObj={assessment}
+                                  deleteDialogTitle={assessment.assessment_name}
+                                />
+
+                                {/* <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => openEditDialog(assessment)}
@@ -1353,7 +1453,7 @@ export default function CyberMaturityPage() {
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
-                                </AlertDialog>
+                                </AlertDialog> */}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -1926,18 +2026,158 @@ export default function CyberMaturityPage() {
 
                   <Button
                     variant="outline"
-                    onClick={() => generateGapsFromAssessments()}
-                    disabled={!selectedAssessmentForControls}
+                    onClick={() => {
+                      if (!selectedAssessmentForControls) {
+                        toast.error("Please select an assessment first");
+                        return;
+                      }
+                      setIsCreateGapDialogOpen(true);
+                    }}
                   >
-                    <Zap className="h-4 w-4 mr-2" />
-                    Generate Gaps
-                  </Button>
-                  <Button variant="outline">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Manual Gap
                   </Button>
                 </div>
               </CardHeader>
+              <Dialog open={isCreateGapDialogOpen} onOpenChange={setIsCreateGapDialogOpen}>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Add Manual Gap</DialogTitle>
+                    <DialogDescription>
+                      Manually add a new gap for the selected assessment.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="control_select">Select Control</Label>
+                      <Select
+                        value={manualGapForm.control_id || ""}
+                        onValueChange={(value) => setManualGapForm({ ...manualGapForm, control_id: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose control" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {criControls.map((control) => (
+                            <SelectItem key={control.id} value={control.id?.toString() || ""}>
+                              {control.control_id}: {control.control_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="gap_description">Gap Description</Label>
+                      <Textarea
+                        id="gap_description"
+                        placeholder="Describe the identified gap"
+                        value={manualGapForm.gap_description}
+                        onChange={(e) => setManualGapForm({ ...manualGapForm, gap_description: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Severity</Label>
+                        <Select
+                          value={manualGapForm.severity}
+                          onValueChange={(value) => setManualGapForm({ ...manualGapForm, severity: value })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Priority</Label>
+                        <Select
+                          value={manualGapForm.priority}
+                          onValueChange={(value) => setManualGapForm({ ...manualGapForm, priority: value })}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="estimated_effort">Estimated Effort</Label>
+                      <Input
+                        id="estimated_effort"
+                        placeholder="e.g. 5 days, 2 weeks"
+                        value={manualGapForm.estimated_effort}
+                        onChange={(e) => setManualGapForm({ ...manualGapForm, estimated_effort: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="recommended_actions">Recommended Actions</Label>
+                      <Textarea
+                        id="recommended_actions"
+                        placeholder="Suggested remediation or actions"
+                        value={manualGapForm.recommended_actions}
+                        onChange={(e) => setManualGapForm({ ...manualGapForm, recommended_actions: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCreateGapDialogOpen(false)}>Cancel</Button>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch("/api/gaps-analysis", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              assessment_id: selectedAssessmentForControls ?? 2,
+                              control_id: parseInt(manualGapForm.control_id),
+                              gap_description: manualGapForm.gap_description,
+                              severity: manualGapForm.severity,
+                              priority: manualGapForm.priority,
+                              estimated_effort: manualGapForm.estimated_effort,
+                              recommended_actions: manualGapForm.recommended_actions
+                            })
+                          });
+                          const result = await res.json();
+                          if (result.success) {
+                            toast.success("Manual gap added successfully");
+                            setIsCreateGapDialogOpen(false);
+                            loadGapsAnalysis();
+                          } else {
+                            toast.error(result.error || "Failed to create gap");
+                          }
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Error creating manual gap");
+                        }
+                      }}
+                      disabled={
+                        !manualGapForm.control_id ||
+                        !manualGapForm.gap_description ||
+                        !manualGapForm.estimated_effort
+                      }
+                    >
+                      Save Gap
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
               <CardContent>
                 {!selectedAssessmentForControls ? (
                   <div className="text-center py-8">
@@ -2448,76 +2688,89 @@ export default function CyberMaturityPage() {
                               }
 
                               return true
-                            })
+                            }))
 
 
 
                             // Apply pagination
                             const startIndex = (remediationPagination.page - 1) * remediationPagination.pageSize
-                            const endIndex = startIndex + remediationPagination.pageSize
-                            const paginatedRemediations = filteredRemediations.slice(startIndex, endIndex)
+                          const endIndex = startIndex + remediationPagination.pageSize
+                          const paginatedRemediations = filteredRemediations.slice(startIndex, endIndex)
 
                             return paginatedRemediations.map((remediation) => {
                               const gap = gapsAnalysis.find(g => g.id === remediation.gap_id)
-                              return (
-                                <TableRow key={remediation.id}>
-                                  <TableCell className="font-medium">
-                                    <div>
-                                      <div className="font-medium text-sm">
-                                        {remediation.control_id}: {remediation.control_name}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {remediation.gap_description?.length > 60
-                                          ? `${remediation.gap_description.substring(0, 60)}...`
-                                          : remediation.gap_description}
-                                      </div>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="max-w-xs">
-                                      <div className="font-medium text-sm">{remediation.remediation_plan}</div>
-                                      {remediation.notes && (
-                                        <div className="text-xs text-muted-foreground mt-1">
-                                          {remediation.notes.length > 50
-                                            ? `${remediation.notes.substring(0, 50)}...`
-                                            : remediation.notes}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <User className="h-4 w-4 text-muted-foreground" />
-                                      {remediation.assigned_to}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                                      {new Date(remediation.due_date).toLocaleDateString()}
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant={
-                                        remediation.status === 'completed' ? 'default' :
-                                          remediation.status === 'in_progress' ? 'secondary' :
-                                            remediation.status === 'not_started' ? 'outline' : 'destructive'
-                                      }
-                                    >
-                                      {remediation.status.replace('_', ' ').toUpperCase()}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    {gap && getPriorityBadge(gap.priority)}
-                                  </TableCell>
-                                  <TableCell>
-                                    <div className="flex items-center gap-2">
-                                      <Button variant="outline" size="sm">
+                          return (
+                          <TableRow key={remediation.id}>
+                            <TableCell className="font-medium">
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {remediation.control_id}: {remediation.control_name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {remediation.gap_description?.length > 60
+                                    ? `${remediation.gap_description.substring(0, 60)}...`
+                                    : remediation.gap_description}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="max-w-xs">
+                                <div className="font-medium text-sm">{remediation.remediation_plan}</div>
+                                {remediation.notes && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {remediation.notes.length > 50
+                                      ? `${remediation.notes.substring(0, 50)}...`
+                                      : remediation.notes}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                {remediation.assigned_to}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                {new Date(remediation.due_date).toLocaleDateString()}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  remediation.status === 'completed' ? 'default' :
+                                    remediation.status === 'in_progress' ? 'secondary' :
+                                      remediation.status === 'not_started' ? 'outline' : 'destructive'
+                                }
+                              >
+                                {remediation.status.replace('_', ' ').toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {gap && getPriorityBadge(gap.priority)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <ActionButtons isTableAction={true}
+                                  //onView={() => {}}
+                                  onEdit={() => handleEditRemediation(remediation)}
+
+                                  actionObj={remediation}
+                                //onDelete={() => handleDeleteAsset(asset)}
+                                //deleteDialogTitle={asset.asset_name}
+                                />
+                                {/* <Button variant="outline" size="sm">
                                         <Edit className="h-4 w-4 mr-1" />
                                         Update
                                       </Button>
-                                      <Button variant="outline" size="sm">
+
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleCompleteRemediation(remediation.id)}
+                                      >
                                         <CheckCircle className="h-4 w-4 mr-1" />
                                         Complete
                                       </Button>
@@ -2532,271 +2785,496 @@ export default function CyberMaturityPage() {
                     </div>
 
                     {/* Pagination Controls for Remediation */}
-                    {remediationPagination.total > remediationPagination.pageSize && (
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>
-                            Showing {((remediationPagination.page - 1) * remediationPagination.pageSize) + 1} to {Math.min(remediationPagination.page * remediationPagination.pageSize, remediationPagination.total)} of {remediationPagination.total} remediation activities
-                          </span>
-                        </div>
+                                {remediationPagination.total > remediationPagination.pageSize && (
+                                  <div className="flex items-center justify-between mt-4">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <span>
+                                        Showing {((remediationPagination.page - 1) * remediationPagination.pageSize) + 1} to {Math.min(remediationPagination.page * remediationPagination.pageSize, remediationPagination.total)} of {remediationPagination.total} remediation activities
+                                      </span>
+                                    </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRemediationPagination({ ...remediationPagination, page: 1 })}
-                            disabled={remediationPagination.page === 1}
-                          >
-                            <ChevronsLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRemediationPagination({ ...remediationPagination, page: remediationPagination.page - 1 })}
-                            disabled={remediationPagination.page === 1}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setRemediationPagination({ ...remediationPagination, page: 1 })}
+                                        disabled={remediationPagination.page === 1}
+                                      >
+                                        <ChevronsLeft className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setRemediationPagination({ ...remediationPagination, page: remediationPagination.page - 1 })}
+                                        disabled={remediationPagination.page === 1}
+                                      >
+                                        <ChevronLeft className="h-4 w-4" />
+                                      </Button>
 
-                          <span className="text-sm">
-                            Page {remediationPagination.page} of {Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
-                          </span>
+                                      <span className="text-sm">
+                                        Page {remediationPagination.page} of {Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
+                                      </span>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRemediationPagination({ ...remediationPagination, page: remediationPagination.page + 1 })}
-                            disabled={remediationPagination.page === Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setRemediationPagination({ ...remediationPagination, page: Math.ceil(remediationPagination.total / remediationPagination.pageSize) })}
-                            disabled={remediationPagination.page === Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
-                          >
-                            <ChevronsRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setRemediationPagination({ ...remediationPagination, page: remediationPagination.page + 1 })}
+                                        disabled={remediationPagination.page === Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
+                                      >
+                                        <ChevronRight className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setRemediationPagination({ ...remediationPagination, page: Math.ceil(remediationPagination.total / remediationPagination.pageSize) })}
+                                        disabled={remediationPagination.page === Math.ceil(remediationPagination.total / remediationPagination.pageSize)}
+                                      >
+                                        <ChevronsRight className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
 
-                    {remediationTracking.filter(remediation => {
-                      const gap = gapsAnalysis.find(g => g.id === remediation.gap_id)
-                      return gap && gap.assessment_id === selectedAssessmentForControls
-                    }).length === 0 && (
-                        <div className="text-center py-8">
-                          <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-muted-foreground mb-4">No remediation activities assigned for this assessment</p>
-                          <p className="text-sm text-muted-foreground">
-                            Create gaps first, then assign remediation activities to track progress
-                          </p>
-                        </div>
-                      )}
-                  </div>
+                                {remediationTracking.filter(remediation => {
+                                  const gap = gapsAnalysis.find(g => g.id === remediation.gap_id)
+                                  return gap && gap.assessment_id === selectedAssessmentForControls
+                                }).length === 0 && (
+                                    <div className="text-center py-8">
+                                      <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                                      <p className="text-muted-foreground mb-4">No remediation activities assigned for this assessment</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        Create gaps first, then assign remediation activities to track progress
+                                      </p>
+                                    </div>
+                                  )}
+                              </div>
                 )}
-              </CardContent>
-            </Card>
+                            </CardContent>
+                          </Card>
 
-            {/* Create Remediation Dialog */}
-            <Dialog open={isCreateRemediationOpen} onOpenChange={setIsCreateRemediationOpen}>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Assign Remediation Activity</DialogTitle>
-                  <DialogDescription>
-                    Create a remediation plan for an identified gap
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="gap_select">Select Gap</Label>
-                    <Select
-                      value={remediationForm.gap_id?.toString() || ""}
-                      onValueChange={(value) => setRemediationForm({ ...remediationForm, gap_id: parseInt(value) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a gap to remediate" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {gapsAnalysis
-                          .filter(gap => gap.assessment_id === selectedAssessmentForControls)
-                          .map((gap) => (
-                            <SelectItem key={gap.id} value={gap.id?.toString() || ""}>
-                              {gap.control_id_str}: {gap.gap_description?.substring(0, 50)}...
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                          {/* Create Remediation Dialog */}
+                          <Dialog open={isCreateRemediationOpen} onOpenChange={setIsCreateRemediationOpen}>
+                            <DialogContent className="sm:max-w-[600px]">
+                              <DialogHeader>
+                                <DialogTitle>Assign Remediation Activity</DialogTitle>
+                                <DialogDescription>
+                                  Create a remediation plan for an identified gap
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="gap_select">Select Gap</Label>
+                                  <Select
+                                    value={remediationForm.gap_id?.toString() || ""}
+                                    onValueChange={(value) => setRemediationForm({ ...remediationForm, gap_id: parseInt(value) })}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Choose a gap to remediate" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {gapsAnalysis
+                                        .filter(gap => gap.assessment_id === selectedAssessmentForControls)
+                                        .map((gap) => (
+                                          <SelectItem key={gap.id} value={gap.id?.toString() || ""}>
+                                            {gap.control_id_str}: {gap.gap_description?.substring(0, 50)}...
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="remediation_plan">Remediation Plan</Label>
-                    <Textarea
-                      id="remediation_plan"
-                      value={remediationForm.remediation_plan}
-                      onChange={(e) => setRemediationForm({ ...remediationForm, remediation_plan: e.target.value })}
-                      placeholder="Describe the remediation plan"
-                      rows={3}
-                    />
-                  </div>
+                                <div className="space-y-2">
+                                  <Label htmlFor="remediation_plan">Remediation Plan</Label>
+                                  <Textarea
+                                    id="remediation_plan"
+                                    value={remediationForm.remediation_plan}
+                                    onChange={(e) => setRemediationForm({ ...remediationForm, remediation_plan: e.target.value })}
+                                    placeholder="Describe the remediation plan"
+                                    rows={3}
+                                  />
+                                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="assigned_to">Assigned To</Label>
-                      <Input
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="assigned_to">Assigned To</Label>
+                                    <OwnerSelectInput formData={remediationForm} setFormData={setRemediationFilters} fieldName="assigned_to" />
+                                    {/* <Input
                         id="assigned_to"
                         value={remediationForm.assigned_to}
                         onChange={(e) => setRemediationForm({ ...remediationForm, assigned_to: e.target.value })}
                         placeholder="Person responsible"
-                      />
+                      /> */}
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="due_date">Due Date</Label>
+                                    <Input
+                                      id="due_date"
+                                      type="date"
+                                      value={remediationForm.due_date}
+                                      onChange={(e) => setRemediationForm({ ...remediationForm, due_date: e.target.value })}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="remediation_notes">Notes</Label>
+                                  <Textarea
+                                    id="remediation_notes"
+                                    value={remediationForm.notes}
+                                    onChange={(e) => setRemediationForm({ ...remediationForm, notes: e.target.value })}
+                                    placeholder="Additional notes or context"
+                                    rows={2}
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsCreateRemediationOpen(false)}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={
+                                    editingRemediationId
+                                      ? () => handleUpdateRemediation(editingRemediationId)
+                                      : handleCreateRemediation
+                                  }
+                                  variant="outline"
+                                  disabled={
+                                    !remediationForm.gap_id ||
+                                    !remediationForm.remediation_plan ||
+                                    !remediationForm.assigned_to ||
+                                    !remediationForm.due_date
+                                  }
+                                >
+                                  {editingRemediationId ? "Update Remediation" : "Assign Remediation"}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TabsContent>
+                      </Tabs>
+                      {/* Assess Control Dialog */}
+                      <Dialog open={isAssessDialogOpen} onOpenChange={setIsAssessDialogOpen}>
+                        <DialogContent className="sm:max-w-[600px]">
+                          <DialogHeader>
+                            <DialogTitle>Assess Control</DialogTitle>
+                            <DialogDescription>
+                              Evaluate the current and target maturity levels for the selected control.
+                            </DialogDescription>
+                          </DialogHeader>
+
+                          {selectedControl ? (
+                            <div className="grid gap-4 py-4">
+                              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
+                                <h3 className="font-medium text-blue-700 dark:text-blue-300 mb-1">
+                                  {selectedControl.control_id}: {selectedControl.control_name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {selectedControl.control_objective}
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="current_level">Current Maturity Level</Label>
+                                  <Select
+                                    value={controlAssessmentForm.current_level.toString()}
+                                    onValueChange={(value) =>
+                                      setControlAssessmentForm({
+                                        ...controlAssessmentForm,
+                                        current_level: parseInt(value),
+                                      })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {[1, 2, 3, 4, 5].map((level) => (
+                                        <SelectItem key={level} value={level.toString()}>
+                                          Level {level}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="target_level">Target Maturity Level</Label>
+                                  <Select
+                                    value={controlAssessmentForm.target_level.toString()}
+                                    onValueChange={(value) =>
+                                      setControlAssessmentForm({
+                                        ...controlAssessmentForm,
+                                        target_level: parseInt(value),
+                                      })
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {[1, 2, 3, 4, 5].map((level) => (
+                                        <SelectItem key={level} value={level.toString()}>
+                                          Level {level}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="assessment_date">Assessment Date</Label>
+                                <Input
+                                  id="assessment_date"
+                                  type="date"
+                                  value={controlAssessmentForm.assessment_date}
+                                  onChange={(e) =>
+                                    setControlAssessmentForm({
+                                      ...controlAssessmentForm,
+                                      assessment_date: e.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="comments">Assessor Comments</Label>
+                                <Textarea
+                                  id="comments"
+                                  placeholder="Provide assessment rationale or notes"
+                                  value={controlAssessmentForm.comments}
+                                  onChange={(e) =>
+                                    setControlAssessmentForm({
+                                      ...controlAssessmentForm,
+                                      comments: e.target.value,
+                                    })
+                                  }
+                                  rows={2}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label htmlFor="evidence">Evidence / Reference</Label>
+                                <Textarea
+                                  id="evidence"
+                                  placeholder="Add link or description of supporting evidence"
+                                  value={controlAssessmentForm.evidence}
+                                  onChange={(e) =>
+                                    setControlAssessmentForm({
+                                      ...controlAssessmentForm,
+                                      evidence: e.target.value,
+                                    })
+                                  }
+                                  rows={2}
+                                />
+                              </div>
+
+                              {/* Gap Fields (shown if current < target) */}
+                              {controlAssessmentForm.current_level < controlAssessmentForm.target_level && (
+                                <div className="space-y-4 border-t pt-4">
+                                  <h4 className="font-medium text-red-600">Gap Details</h4>
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor="gap_description">Gap Description</Label>
+                                    <Textarea
+                                      id="gap_description"
+                                      placeholder="Describe the gap between current and target levels"
+                                      value={controlAssessmentForm.gap_description}
+                                      onChange={(e) =>
+                                        setControlAssessmentForm({
+                                          ...controlAssessmentForm,
+                                          gap_description: e.target.value,
+                                        })
+                                      }
+                                      rows={2}
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="gap_severity">Severity</Label>
+                                      <Select
+                                        value={controlAssessmentForm.gap_severity}
+                                        onValueChange={(value) =>
+                                          setControlAssessmentForm({
+                                            ...controlAssessmentForm,
+                                            gap_severity: value as
+                                              | "low"
+                                              | "medium"
+                                              | "high"
+                                              | "critical",
+                                          })
+                                        }
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="low">Low</SelectItem>
+                                          <SelectItem value="medium">Medium</SelectItem>
+                                          <SelectItem value="high">High</SelectItem>
+                                          <SelectItem value="critical">Critical</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <Label htmlFor="estimated_effort">Estimated Effort</Label>
+                                      <Input
+                                        id="estimated_effort"
+                                        placeholder="e.g. 5 days, 2 weeks"
+                                        value={controlAssessmentForm.estimated_effort}
+                                        onChange={(e) =>
+                                          setControlAssessmentForm({
+                                            ...controlAssessmentForm,
+                                            estimated_effort: e.target.value,
+                                          })
+                                        }
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <Label htmlFor="recommended_actions">Recommended Actions</Label>
+                                    <Textarea
+                                      id="recommended_actions"
+                                      placeholder="Suggested remediation steps or improvements"
+                                      value={controlAssessmentForm.recommended_actions}
+                                      onChange={(e) =>
+                                        setControlAssessmentForm({
+                                          ...controlAssessmentForm,
+                                          recommended_actions: e.target.value,
+                                        })
+                                      }
+                                      rows={2}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-center text-muted-foreground py-4">
+                              No control selected.
+                            </p>
+                          )}
+
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsAssessDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleControlAssessment}>Save Assessment</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Export Dialog */}
+                      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Export CRI Controls</DialogTitle>
+                            <DialogDescription>
+                              Export CRI framework controls to a file format of your choice.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="export-format" className="text-right">
+                                Format
+                              </Label>
+                              <Select value={exportFormat} onValueChange={(value: any) => setExportFormat(value)}>
+                                <SelectTrigger className="col-span-3">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="csv">CSV</SelectItem>
+                                  <SelectItem value="excel">Excel</SelectItem>
+                                  <SelectItem value="json">JSON</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="export-domain" className="text-right">
+                                Domain
+                              </Label>
+                              <Select value={exportDomain} onValueChange={setExportDomain}>
+                                <SelectTrigger className="col-span-3">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">All Domains</SelectItem>
+                                  <SelectItem value="Governance">Governance</SelectItem>
+                                  <SelectItem value="Information Security">Information Security</SelectItem>
+                                  <SelectItem value="Operations">Operations</SelectItem>
+                                  <SelectItem value="Compliance">Compliance</SelectItem>
+                                  <SelectItem value="Supply Chain">Supply Chain</SelectItem>
+                                  <SelectItem value="People">People</SelectItem>
+                                  <SelectItem value="Technology">Technology</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={handleExportControls} disabled={isExporting}>
+                              {isExporting ? "Exporting..." : "Export"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Import Dialog */}
+                      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Import CRI Controls</DialogTitle>
+                            <DialogDescription>
+                              Import CRI framework controls from a CSV or Excel file. This will add new controls to the existing framework.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="import-file" className="text-right">
+                                File
+                              </Label>
+                              <div className="col-span-3">
+                                <Input
+                                  id="import-file"
+                                  type="file"
+                                  accept=".csv,.xls,.xlsx"
+                                  onChange={handleFileUpload}
+                                  disabled={isImporting}
+                                />
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Supported formats: CSV, Excel (.xls, .xlsx)
+                                </p>
+                              </div>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                <strong>CSV Format:</strong> Control ID, Control Name, Domain, Control Objective, Maturity Level 1, Maturity Level 2, Maturity Level 3, Maturity Level 4, Maturity Level 5
+                              </p>
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button variant="outline" onClick={() => {
+                              const input = document.getElementById('import-file') as HTMLInputElement
+                              if (input?.files?.[0]) {
+                                handleImportControls(input.files[0], true)
+                              }
+                            }} disabled={isImporting}>
+                              {isImporting ? "Importing..." : "Import & Overwrite"}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="due_date">Due Date</Label>
-                      <Input
-                        id="due_date"
-                        type="date"
-                        value={remediationForm.due_date}
-                        onChange={(e) => setRemediationForm({ ...remediationForm, due_date: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="remediation_notes">Notes</Label>
-                    <Textarea
-                      id="remediation_notes"
-                      value={remediationForm.notes}
-                      onChange={(e) => setRemediationForm({ ...remediationForm, notes: e.target.value })}
-                      placeholder="Additional notes or context"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCreateRemediationOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleCreateRemediation}
-                    variant="outline"
-                    disabled={!remediationForm.gap_id || !remediationForm.remediation_plan || !remediationForm.assigned_to || !remediationForm.due_date}
-                  >
-                    Assign Remediation
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </TabsContent>
-        </Tabs>
-
-        {/* Export Dialog */}
-        <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Export CRI Controls</DialogTitle>
-              <DialogDescription>
-                Export CRI framework controls to a file format of your choice.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="export-format" className="text-right">
-                  Format
-                </Label>
-                <Select value={exportFormat} onValueChange={(value: any) => setExportFormat(value)}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="csv">CSV</SelectItem>
-                    <SelectItem value="excel">Excel</SelectItem>
-                    <SelectItem value="json">JSON</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="export-domain" className="text-right">
-                  Domain
-                </Label>
-                <Select value={exportDomain} onValueChange={setExportDomain}>
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Domains</SelectItem>
-                    <SelectItem value="Governance">Governance</SelectItem>
-                    <SelectItem value="Information Security">Information Security</SelectItem>
-                    <SelectItem value="Operations">Operations</SelectItem>
-                    <SelectItem value="Compliance">Compliance</SelectItem>
-                    <SelectItem value="Supply Chain">Supply Chain</SelectItem>
-                    <SelectItem value="People">People</SelectItem>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleExportControls} disabled={isExporting}>
-                {isExporting ? "Exporting..." : "Export"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Import Dialog */}
-        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Import CRI Controls</DialogTitle>
-              <DialogDescription>
-                Import CRI framework controls from a CSV or Excel file. This will add new controls to the existing framework.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="import-file" className="text-right">
-                  File
-                </Label>
-                <div className="col-span-3">
-                  <Input
-                    id="import-file"
-                    type="file"
-                    accept=".csv,.xls,.xlsx"
-                    onChange={handleFileUpload}
-                    disabled={isImporting}
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Supported formats: CSV, Excel (.xls, .xlsx)
-                  </p>
-                </div>
-              </div>
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>CSV Format:</strong> Control ID, Control Name, Domain, Control Objective, Maturity Level 1, Maturity Level 2, Maturity Level 3, Maturity Level 4, Maturity Level 5
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="outline" onClick={() => {
-                const input = document.getElementById('import-file') as HTMLInputElement
-                if (input?.files?.[0]) {
-                  handleImportControls(input.files[0], true)
+                  </main>
+                )
                 }
-              }} disabled={isImporting}>
-                {isImporting ? "Importing..." : "Import & Overwrite"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-      </div>
-    </main>
-  )
-}

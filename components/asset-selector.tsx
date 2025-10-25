@@ -27,9 +27,7 @@ interface Asset {
   asset_type: string
   classification: string
   owner: string
-  model_version?: string
-  display_name: string
-  full_info: string
+  
 }
 
 interface AssetSelectorProps {

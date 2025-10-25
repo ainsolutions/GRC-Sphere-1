@@ -40,6 +40,9 @@ export function AssetChatbot({ onAssetCreated }: AssetChatbotProps) {
     availability_level: "",
     location: "",
     description: "",
+    department: "",
+    model_version: "",
+    ip_address: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -66,6 +69,26 @@ export function AssetChatbot({ onAssetCreated }: AssetChatbotProps) {
       question: "Who is the owner or responsible person for this asset? Please provide their name or department.",
       validation: (value: string) => value.length >= 2,
       errorMessage: "Owner name must be at least 2 characters long.",
+    },
+    {
+      field: "department",
+      question: "Which department does this asset belong to?",
+      validation: (value: string) => value.length >= 2,
+      errorMessage: "Department name must be at least 2 characters long.",
+    },
+    {
+      field: "model_version",
+      question: "Can you specify the model or version of this asset? (e.g., Windows Server 2022, Cisco ASA 5506, v2.1.0)",
+      validation: (value: string) => value.length >= 2,
+      errorMessage: "Model/Version must be at least 2 characters long.",
+    },
+    {
+      field: "ip_address",
+      question: "If applicable, please provide the IP address for this asset (or type 'none' if not applicable).",
+      validation: (value: string) =>
+        value.toLowerCase() === "none" ||
+        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(value),
+      errorMessage: "Please enter a valid IP address (e.g., 192.168.1.100) or type 'none'.",
     },
     {
       field: "classification",
@@ -196,6 +219,9 @@ export function AssetChatbot({ onAssetCreated }: AssetChatbotProps) {
 • CIA Levels: C:${updatedAssetData.confidentiality_level} I:${updatedAssetData.integrity_level} A:${updatedAssetData.availability_level}
 • Location: ${updatedAssetData.location}
 • Description: ${updatedAssetData.description}
+• Department: ${updatedAssetData.department}
+• Model/Version: ${updatedAssetData.model_version}
+• IP Address: ${updatedAssetData.ip_address}
 
 Would you like me to create this asset? Type "yes" to confirm or "no" to cancel.`
 
@@ -213,17 +239,20 @@ const handleConfirmation = async (userInput: string) => {
       const assetId = `AST-${Date.now().toString().slice(-6)}`
 
       const result = await createAsset({
-        asset_id: assetId,                        // ✅ include asset_id
-        asset_name: assetData.asset_name,         // ✅ correct key
+        asset_id: assetId,
+        asset_name: assetData.asset_name,
         asset_type: assetData.asset_type,
-        description: assetData.description,
         owner: assetData.owner,
+        department: assetData.department,
+        model_version: assetData.model_version,
+        ip_address: assetData.ip_address,
         classification: assetData.classification,
-        business_value: assetData.business_value, // ✅ correct key
+        business_value: assetData.business_value,
         confidentiality_level: Number(assetData.confidentiality_level),
         integrity_level: Number(assetData.integrity_level),
         availability_level: Number(assetData.availability_level),
         location: assetData.location,
+        description: assetData.description,
       })
 
       console.log("API Response:", result)

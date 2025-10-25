@@ -81,7 +81,7 @@ export async function createNistCsfRiskTemplate(data: any) {
   if (!res.ok) throw new Error("Failed to create template");
   return await res.json();
 }
-
+/* 
 export async function createNistCsfRiskTemplate(data: any) {
   const res = await fetch(`/api/nist-csf-risk-templates`, {
     method: "POST",
@@ -90,7 +90,7 @@ export async function createNistCsfRiskTemplate(data: any) {
   });
   if (!res.ok) throw new Error("Failed to create template");
   return await res.json();
-}
+} */
 
 
 export async function getNISTCSFImplementationTiers() {

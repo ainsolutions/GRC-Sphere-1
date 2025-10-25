@@ -278,7 +278,14 @@ export const GET = withContext(async({ tenantDb }, request) => {
       },
     })
   } catch (error) {
-    console.error("Dashboard metrics error:", error)
-    return NextResponse.json({ error: "Failed to fetch dashboard metrics" }, { status: 500 })
-  }
+  console.error("Dashboard metrics error:", error);
+  return NextResponse.json(
+    {
+      success: false,
+      error: "Failed to fetch dashboard metrics",
+      details: String(error),
+    },
+    { status: 500 }
+  );
+}
 });

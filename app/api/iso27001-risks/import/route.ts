@@ -35,7 +35,7 @@ export const POST = withContext(async ({ tenantDb }, request: Request) => {
             assets,
             residual_likelihood,
             residual_impact,
-            control_assessment,
+            existing_controls,
             risk_treatment
           )
           VALUES (
@@ -57,7 +57,7 @@ export const POST = withContext(async ({ tenantDb }, request: Request) => {
             ${row.assets || "{}"},
             ${row.residual_likelihood || null},
             ${row.residual_impact || null},
-            ${row.control_assessment || null},
+            ${row.existing_controls || "{}"},
             ${row.risk_treatment || null}
           )
         `

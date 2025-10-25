@@ -114,6 +114,8 @@ export const POST = withContext(async({ tenantDb }, request) => {
     const lessons_learned = formData.get("lessons_learned") as string
     const risk_id = formData.get("risk_id") as string
     const remediation_type = (formData.get("remediation_type") as string) || "Root Cause Fix"
+    const responsible_department = formData.get("responsible_department") as string
+    const remediation_departmental_unit = formData.get("departmental_unit") as string
     const evidence_file = formData.get("evidence_file") as File | null
 
     // Validate required fields
@@ -127,9 +129,9 @@ export const POST = withContext(async({ tenantDb }, request) => {
     const result = await tenantDb`
       INSERT INTO incident_remediation_tracking (
         incident_id, remediation_title, remediation_description, remediation_type,
-        priority, assigned_to, responsible_department, start_date, target_completion_date,
-        estimated_cost, risk_before_remediation, business_impact_assessment, success_criteria,
-        created_by, status
+        priority, assigned_to, responsible_department, remediation_departmental_unit, 
+        start_date, target_completion_date, estimated_cost, risk_before_remediation, 
+        business_impact_assessment, success_criteria, created_by, status
       ) VALUES (
         ${incident_id}, 
         ${"Incident Remediation Action"}, 
@@ -137,7 +139,8 @@ export const POST = withContext(async({ tenantDb }, request) => {
         ${remediation_type},
         ${"Medium"}, 
         ${"System"}, 
-        ${"IT Security"}, 
+        ${responsible_department || "IT Security"}, 
+        ${remediation_departmental_unit || null},
         ${action_date}, 
         ${target_resolution_date || null},
         ${estimated_cost ? Number.parseFloat(estimated_cost) : null}, 

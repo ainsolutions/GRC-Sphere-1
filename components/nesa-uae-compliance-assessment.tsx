@@ -35,6 +35,9 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { NESAUAERemediationTracker } from "./nesa-uae-remediation-tracker"
 import { NESAUAESelfAssessment } from "./nesa-uae-self-assessment"
+import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NESAAssessment {
   id: number
@@ -307,10 +310,11 @@ export function NESAUAEComplianceAssessment() {
           </Button>
           <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New NESA Assessment" />
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New NESA Assessment
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -392,20 +396,22 @@ export function NESAUAEComplianceAssessment() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="assessor_name">Assessor Name</Label>
-                    <Input
-                      id="assessor_name"
-                      value={newAssessment.assessor_name}
-                      onChange={(e) => setNewAssessment((prev) => ({ ...prev, assessor_name: e.target.value }))}
-                      placeholder="Enter assessor name"
+                    <OwnerSelectInput 
+                      formData={newAssessment} 
+                      setFormData={setNewAssessment} 
+                      fieldName="assessor_name" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="assessor_organization">Assessor Organization</Label>
-                    <Input
-                      id="assessor_organization"
-                      value={newAssessment.assessor_organization}
-                      onChange={(e) => setNewAssessment((prev) => ({ ...prev, assessor_organization: e.target.value }))}
-                      placeholder="Enter assessor organization"
+                    <Label htmlFor="assessor_organization">Assessor Department</Label>
+                    <DepartmentSelectInput 
+                      formData={newAssessment} 
+                      setFormData={setNewAssessment} 
+                      fieldName="assessor_organization"
+                      onDepartmentSelected={(department) => {
+                        // Optionally handle additional logic when department is selected
+                        console.log("Selected department:", department);
+                      }}
                     />
                   </div>
                 </div>
@@ -490,10 +496,10 @@ export function NESAUAEComplianceAssessment() {
 
       {/* Main Content */}
       <Tabs defaultValue="assessments" className="w-full">
-       
+
 
         <TabsContent value="assessments" className="space-y-4">
-              <Card>
+          <Card>
             <CardHeader>
               <CardTitle className="bg-gradient-to-r from-red-600 to-green-600 bg-clip-text text-transparent">
                 NESA UAE Assessments
@@ -574,7 +580,17 @@ export function NESAUAEComplianceAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true}
+                                  onView={() => {
+                                    setSelectedAssessment(assessment)
+                                    setIsAssessmentDetailOpen(true)
+                                  }}
+                                  onEdit={() => { }}
+                                  onDelete={() => { }}
+                                actionObj={assessment}
+                                //deleteDialogTitle={}                                
+                                />
+                                {/* <Button
                                   variant="outline"
                                   size="sm"
                                   className="hover:bg-red-100"
@@ -590,7 +606,7 @@ export function NESAUAEComplianceAssessment() {
                                 </Button>
                                 <Button variant="outline" size="sm" className="hover:bg-red-100">
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

@@ -17,6 +17,7 @@ export const GET = withContext( async ({ tenantDb }) => {
         retention_period,
         disposal_method,
         location,
+        business_value,
         
       FROM assets 
       ORDER BY asset_name ASC

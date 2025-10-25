@@ -27,6 +27,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface SAMARemediation {
   id: number
@@ -272,17 +273,18 @@ export function SAMARemediationTracker({ assessmentId }: SAMARemediationTrackerP
             variant="outline"
             onClick={fetchRemediations}
             disabled={loading}
-            
+
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Dialog open={isNewRemediationOpen} onOpenChange={setIsNewRemediationOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Remediation" />
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Remediation
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -633,7 +635,17 @@ export function SAMARemediationTracker({ assessmentId }: SAMARemediationTrackerP
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedRemediation(remediation)
+                                setIsDetailOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={remediation}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                                 
@@ -650,7 +662,7 @@ export function SAMARemediationTracker({ assessmentId }: SAMARemediationTrackerP
                             
                             <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

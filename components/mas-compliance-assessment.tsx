@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "@/components/ui/use-toast"
 import { Plus, Search, Download, Eye, Edit, Trash2, TrendingUp, BarChart3 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MASAssessment {
   id: string
@@ -321,10 +322,11 @@ export function MASComplianceAssessment() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New Assessment" />
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   New Assessment
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -413,7 +415,7 @@ export function MASComplianceAssessment() {
                   </Button>
                   <Button
                     onClick={handleCreateAssessment}
-                  
+
                   >
                     Create Assessment
                   </Button>
@@ -513,7 +515,17 @@ export function MASComplianceAssessment() {
                         <TableCell>{getNotificationStatusBadge(assessment.mas_notification_status)}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedAssessment(assessment)
+                                setIsViewDialogOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={assessment}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -526,9 +538,9 @@ export function MASComplianceAssessment() {
                             <Button variant="outline" size="sm">
                               <Edit className="h-4 w-4" />
                             </Button>
-                              <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

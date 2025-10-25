@@ -46,6 +46,7 @@ export const GET = withContext(async({tenantDb}: HttpSessionContext, request) =>
         measurement_frequency,
         owner,
         department,
+        departmental_unit,
         calculation_method,
         data_source,
         last_updated,
@@ -94,6 +95,7 @@ export const POST = withContext(async({tenantDb}: HttpSessionContext, request) =
       measurement_frequency = "monthly",
       owner,
       department,
+      departmental_unit,
       calculation_method,
       data_source,
       next_review_date
@@ -111,11 +113,11 @@ export const POST = withContext(async({tenantDb}: HttpSessionContext, request) =
       INSERT INTO governance_kpis (
         name, description, target_value, current_value, unit, category, 
         framework, status, trend, measurement_frequency, owner, department,
-        calculation_method, data_source, next_review_date
+        departmental_unit, calculation_method, data_source, next_review_date
       ) VALUES (
         ${name}, ${description}, ${target_value}, ${current_value}, ${unit}, ${category}, 
         ${framework}, ${status}, ${trend}, ${measurement_frequency}, ${owner}, ${department},
-        ${calculation_method}, ${data_source}, ${next_review_date}
+        ${departmental_unit || null}, ${calculation_method}, ${data_source}, ${next_review_date}
       ) RETURNING *
     `
     

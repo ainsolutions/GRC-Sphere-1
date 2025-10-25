@@ -36,6 +36,10 @@ import {
   Upload,
   Loader2,
 } from "lucide-react"
+import { ActionButtons } from "@/components/ui/action-buttons"
+import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import UnitSelectInput from "@/components/unit-search-input"
 
 // Interface for governance budget data from API
 interface GovernanceBudget {
@@ -52,6 +56,7 @@ interface GovernanceBudget {
   status: string
   budget_owner: string
   department?: string
+  departmental_unit?: string
   cost_center?: string
   vendor?: string
   contract_reference?: string
@@ -121,8 +126,8 @@ export default function GovernanceBudget() {
   useEffect(() => {
     let filtered = budgets.filter(budget => {
       const matchesSearch = budget.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           budget.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (budget.subcategory && budget.subcategory.toLowerCase().includes(searchTerm.toLowerCase()))
+        budget.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (budget.subcategory && budget.subcategory.toLowerCase().includes(searchTerm.toLowerCase()))
 
       return matchesSearch
     })
@@ -143,11 +148,11 @@ export default function GovernanceBudget() {
 
       if (result.success) {
         await fetchBudgets() // Refresh the budgets list
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "Budget Created",
-      description: "New budget has been successfully created.",
-    })
+        setIsCreateDialogOpen(false)
+        toast({
+          title: "Budget Created",
+          description: "New budget has been successfully created.",
+        })
       } else {
         toast({
           title: "Error",
@@ -181,12 +186,12 @@ export default function GovernanceBudget() {
 
       if (result.success) {
         await fetchBudgets() // Refresh the budgets list
-    setIsEditDialogOpen(false)
-    setEditingBudget(null)
-    toast({
-      title: "Budget Updated",
-      description: "Budget has been successfully updated.",
-    })
+        setIsEditDialogOpen(false)
+        setEditingBudget(null)
+        toast({
+          title: "Budget Updated",
+          description: "Budget has been successfully updated.",
+        })
       } else {
         toast({
           title: "Error",
@@ -214,10 +219,10 @@ export default function GovernanceBudget() {
 
       if (result.success) {
         await fetchBudgets() // Refresh the budgets list
-    toast({
-      title: "Budget Deleted",
-      description: "Budget has been successfully deleted.",
-    })
+        toast({
+          title: "Budget Deleted",
+          description: "Budget has been successfully deleted.",
+        })
       } else {
         toast({
           title: "Error",
@@ -281,10 +286,7 @@ export default function GovernanceBudget() {
               </Button>
               <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Budget
-                  </Button>
+                  <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Budget" />
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
@@ -442,21 +444,21 @@ export default function GovernanceBudget() {
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
               Budget Management ({filteredBudgets.length})
-                    </CardTitle>
+            </CardTitle>
             <CardDescription>
               Track and manage governance budget allocations and spending
-                    </CardDescription>
-              </CardHeader>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Loading budget data...</span>
-                  </div>
+              </div>
             ) : filteredBudgets.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No budget data found. Try adjusting your filters or create a new budget item.
-                  </div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -489,8 +491,8 @@ export default function GovernanceBudget() {
                           <div className="max-w-xs">
                             <div className="text-sm truncate" title={budget.description}>
                               {budget.description}
-                  </div>
-                </div>
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="font-mono text-sm">{budget.fiscal_year}</TableCell>
                         <TableCell className="font-semibold">
@@ -509,12 +511,12 @@ export default function GovernanceBudget() {
                           <div className="flex items-center gap-2">
                             <div className="text-sm font-semibold">
                               {Number(budget.utilization_percentage || 0).toFixed(1)}%
-                  </div>
-                  <Progress 
-                              value={Number(budget.utilization_percentage || 0)} 
+                            </div>
+                            <Progress
+                              value={Number(budget.utilization_percentage || 0)}
                               className="h-2 w-16"
-                  />
-                </div>
+                            />
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(budget.status)}>
@@ -526,27 +528,17 @@ export default function GovernanceBudget() {
                         <TableCell className="text-sm">{budget.vendor || 'N/A'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                  <Button
-                              variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingBudget(budget)
-                      setIsEditDialogOpen(true)
-                    }}
-                  >
-                              <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                              variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteBudget(budget.id)}
-                  >
-                              <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                            <ActionButtons isTableAction={true}
+                              onView={() => { }}
+                              onEdit={() => {
+                                setEditingBudget(budget)
+                                setIsEditDialogOpen(true)
+                              }}
+                              onDelete={() => handleDeleteBudget(budget.id)}
+                                actionObj={budget}
+                              deleteDialogTitle={budget.category}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -554,8 +546,8 @@ export default function GovernanceBudget() {
                 </Table>
               </div>
             )}
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -566,8 +558,8 @@ export default function GovernanceBudget() {
                 Update the budget allocation details.
               </DialogDescription>
             </DialogHeader>
-            <BudgetForm 
-              budget={editingBudget || undefined} 
+            <BudgetForm
+              budget={editingBudget || undefined}
               onSubmit={handleEditBudget}
               onCancel={() => {
                 setIsEditDialogOpen(false)
@@ -582,7 +574,7 @@ export default function GovernanceBudget() {
 }
 
 // Budget Form Component
-function BudgetForm({ budget, onSubmit, onCancel }: { 
+function BudgetForm({ budget, onSubmit, onCancel }: {
   budget?: GovernanceBudget
   onSubmit: (data: any) => void
   onCancel?: () => void
@@ -598,6 +590,7 @@ function BudgetForm({ budget, onSubmit, onCancel }: {
     status: budget?.status || "on-track",
     budget_owner: budget?.budget_owner || "",
     department: budget?.department || "",
+    departmental_unit: budget?.departmental_unit || "",
     cost_center: budget?.cost_center || "",
     vendor: budget?.vendor || "",
     contract_reference: budget?.contract_reference || "",
@@ -724,21 +717,52 @@ function BudgetForm({ budget, onSubmit, onCancel }: {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="budget_owner">Budget Owner</Label>
-          <Input
-            id="budget_owner"
-            value={formData.budget_owner}
-            onChange={(e) => setFormData({ ...formData, budget_owner: e.target.value })}
-            required
+          <Label htmlFor="budget_owner">Budget Owner *</Label>
+          <OwnerSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="budget_owner"
           />
+          <p className="text-xs text-muted-foreground">
+            Search and select budget owner from users
+          </p>
         </div>
         <div>
           <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={formData.department}
-            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+          <DepartmentSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="department"
+            onDepartmentSelected={(department) => {
+              setFormData({
+                ...formData,
+                department: department.name
+              })
+            }}
           />
+          <p className="text-xs text-muted-foreground">
+            Search and select department from organization
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="departmental_unit">Departmental Unit</Label>
+          <UnitSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="departmental_unit"
+            onUnitSelected={(unit) => {
+              setFormData({
+                ...formData,
+                departmental_unit: unit.department_unit || unit.name
+              })
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            Search and select specific unit within department
+          </p>
         </div>
       </div>
 
@@ -772,11 +796,14 @@ function BudgetForm({ budget, onSubmit, onCancel }: {
         </div>
         <div>
           <Label htmlFor="approval_authority">Approval Authority</Label>
-          <Input
-            id="approval_authority"
-            value={formData.approval_authority}
-            onChange={(e) => setFormData({ ...formData, approval_authority: e.target.value })}
+          <OwnerSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="approval_authority"
           />
+          <p className="text-xs text-muted-foreground">
+            Search and select approval authority from users
+          </p>
         </div>
       </div>
 

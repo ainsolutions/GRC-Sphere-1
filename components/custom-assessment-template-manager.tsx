@@ -21,6 +21,7 @@ import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/hooks/use-toast"
 import { Plus, Edit, Trash2, Copy, Users, Lock, FileText, Settings, ChevronRight, AlertTriangle } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface CustomTemplate {
   id: number
@@ -364,10 +365,11 @@ export function CustomAssessmentTemplateManager() {
         </div>
         <Dialog open={showNewTemplateDialog} onOpenChange={setShowNewTemplateDialog}>
           <DialogTrigger asChild>
-            <Button>
+            <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New Template" />
+            {/* <Button>
               <Plus className="h-4 w-4 mr-2" />
               New Template
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -491,9 +493,8 @@ export function CustomAssessmentTemplateManager() {
               templates.map((template) => (
                 <Card
                   key={template.id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedTemplate?.id === template.id ? "ring-2 ring-blue-500" : ""
-                  }`}
+                  className={`cursor-pointer transition-all hover:shadow-md ${selectedTemplate?.id === template.id ? "ring-2 ring-blue-500" : ""
+                    }`}
                   onClick={() => fetchTemplateDetails(template.id)}
                 >
                   <CardContent className="p-4">
@@ -544,14 +545,21 @@ export function CustomAssessmentTemplateManager() {
                     <Copy className="h-4 w-4 mr-2" />
                     Duplicate
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditingTemplate(selectedTemplate)}>
+                  <ActionButtons isTableAction={true}
+                    //onView={() => {}}
+                    onEdit={() => setEditingTemplate(selectedTemplate)}
+                    onDelete={() => handleDeleteTemplate(selectedTemplate.id)}
+                    deleteDialogTitle={selectedTemplate.name}
+                                actionObj={selectedTemplate}
+                  />
+                  {/* <Button variant="outline" size="sm" onClick={() => setEditingTemplate(selectedTemplate)}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleDeleteTemplate(selectedTemplate.id)}>
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -786,12 +794,19 @@ export function CustomAssessmentTemplateManager() {
                                   </div>
                                 </div>
                                 <div className="flex space-x-1">
-                                  <Button variant="outline" size="sm">
+                                  <ActionButtons isTableAction={true}
+                                    //onView={() => {}}
+                                    onEdit={() => {}}
+                                    onDelete={() => {}}
+                                actionObj={item}
+                                    //deleteDialogTitle={}
+                                  />
+                                  {/* <Button variant="outline" size="sm">
                                     <Edit className="h-3 w-3" />
                                   </Button>
                                   <Button variant="outline" size="sm">
                                     <Trash2 className="h-3 w-3" />
-                                  </Button>
+                                  </Button> */}
                                 </div>
                               </div>
                             </div>

@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { DORARemediationTracker } from "./dora-remediation-tracker"
 import { DORASelfAssessment } from "./dora-self-assessment"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface DORAAssessment {
   id: number
@@ -349,10 +350,11 @@ export function DORAComplianceAssessment() {
           </Button>
           <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New DORA Assessment"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New DORA Assessment
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -663,7 +665,17 @@ export function DORAComplianceAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true} 
+                                  onView={() => {
+                                    setSelectedAssessment(assessment)
+                                    setIsAssessmentDetailOpen(true)
+                                  }} 
+                                  onEdit={() => {}} 
+                                  onDelete={() => {}}  
+                                actionObj={assessment} 
+                                  //deleteDialogTitle={}                                
+                                  />
+                                {/* <Button
                                   variant="ghost"
                                   size="sm"
                                   className="hover:bg-indigo-100"
@@ -679,7 +691,7 @@ export function DORAComplianceAssessment() {
                                 </Button>
                                 <Button variant="ghost" size="sm" className="hover:bg-red-100">
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

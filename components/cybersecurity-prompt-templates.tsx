@@ -135,7 +135,7 @@ export default function CybersecurityPromptTemplates({ onPromptSelect }: Cyberse
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex gap-1 full-width overflow-x-auto">
           {categories.map((category) => (
             <Button
               key={category}
@@ -147,7 +147,7 @@ export default function CybersecurityPromptTemplates({ onPromptSelect }: Cyberse
             </Button>
           ))}
         </div>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex gap-1 full-width overflow-x-auto">
           {frameworks.map((framework) => (
             <Button
               key={framework}

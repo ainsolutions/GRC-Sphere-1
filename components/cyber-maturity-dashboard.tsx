@@ -32,6 +32,7 @@ import {
   GapAnalysisForm,
   RemediationTrackingForm
 } from "./cyber-maturity/crud-forms"
+import { ActionButtons } from "./ui/action-buttons"
 
 // Types
 interface CRIControl {
@@ -288,7 +289,7 @@ export function CyberMaturityDashboard() {
     (!selectedAssessment || gap.assessment_id === selectedAssessment) &&
     (!selectedControl || gap.control_id === selectedControl) &&
     (gap.gap_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     gap.recommended_actions?.toLowerCase().includes(searchTerm.toLowerCase()))
+      gap.recommended_actions?.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const filteredRemediations = remediationTrackings.filter(remediation =>
@@ -359,10 +360,11 @@ export function CyberMaturityDashboard() {
                 </div>
                 <Dialog open={maturityDialog} onOpenChange={setMaturityDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Assessment" />
+                    {/* <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Assessment
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <MaturityAssessmentForm
                     assessment={editingMaturityAssessment}
@@ -438,7 +440,17 @@ export function CyberMaturityDashboard() {
                         <TableCell>{new Date(assessment.assessment_date).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              //onView={() => {}} 
+                              onEdit={() => {
+                                setEditingMaturityAssessment(assessment)
+                                setMaturityDialog(true)
+                              }}
+                                actionObj={assessment}
+                            //onDelete={() => {}}   
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -447,7 +459,7 @@ export function CyberMaturityDashboard() {
                               }}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -479,10 +491,11 @@ export function CyberMaturityDashboard() {
                   </Button>
                   <Dialog open={criControlDialog} onOpenChange={setCriControlDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="outline">
+                      <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Control" />
+                      {/* <Button variant="outline">
                         <Plus className="h-4 w-4 mr-2" />
                         Add Control
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <CRIControlForm
                       control={editingCriControl}
@@ -548,7 +561,15 @@ export function CyberMaturityDashboard() {
                             >
                               <BarChart3 className="h-4 w-4" />
                             </Button>
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              //onView={() => {}} 
+                              onEdit={() => {
+                                setEditingCriControl(control)
+                                setCriControlDialog(true)
+                              }}
+                                actionObj={control}
+                              />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -557,7 +578,7 @@ export function CyberMaturityDashboard() {
                               }}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -585,10 +606,11 @@ export function CyberMaturityDashboard() {
                 </div>
                 <Dialog open={gapDialog} onOpenChange={setGapDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Gap Analysis" />
+                    {/* <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Gap Analysis
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <GapAnalysisForm
                     gap={editingGapAnalysis}
@@ -670,7 +692,15 @@ export function CyberMaturityDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              //onView={() => {}} 
+                              onEdit={() => {
+                                setEditingGapAnalysis(gap)
+                                setGapDialog(true)
+                              }}
+                                actionObj={gap}
+                              />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -679,7 +709,7 @@ export function CyberMaturityDashboard() {
                               }}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -707,10 +737,11 @@ export function CyberMaturityDashboard() {
                 </div>
                 <Dialog open={remediationDialog} onOpenChange={setRemediationDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Remediation" />
+                    {/* <Button variant="outline">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Remediation
-                    </Button>
+                    </Button> */}
                   </DialogTrigger>
                   <RemediationTrackingForm
                     remediation={editingRemediationTracking}
@@ -762,7 +793,9 @@ export function CyberMaturityDashboard() {
                         <TableCell className="max-w-xs truncate">
                           {remediation.remediation_plan}
                         </TableCell>
+                        
                         <TableCell>{remediation.assigned_to}</TableCell>
+                        
                         <TableCell>{new Date(remediation.due_date).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Badge className={getRemediationStatusColor(remediation.status)}>
@@ -771,7 +804,15 @@ export function CyberMaturityDashboard() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              //onView={() => {}} 
+                              onEdit={() => {
+                                setEditingRemediationTracking(remediation)
+                                setRemediationDialog(true)
+                              }}
+                                actionObj={remediation}
+                              />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -780,7 +821,7 @@ export function CyberMaturityDashboard() {
                               }}
                             >
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

@@ -37,6 +37,7 @@ import {
   TrendingUp,
   Target,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ControlAssessment {
   id: string
@@ -349,10 +350,11 @@ export function ControlAssessmentModule({
             {!readOnly && (
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="Add Control"/>
+                  {/* <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Control
-                  </Button>
+                  </Button> */}
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
@@ -436,12 +438,19 @@ export function ControlAssessmentModule({
                         <div className="flex items-center space-x-2">
                           {!readOnly && (
                             <>
-                              <Button variant="ghost" size="sm" onClick={() => setEditingControl(control)}>
+                              <ActionButtons isTableAction={true} 
+                                  //onView={() => {}} 
+                                  onEdit={() => setEditingControl(control)} 
+                                  onDelete={() => deleteControl(control.id)}   
+                                  deleteDialogTitle={control.controlName}     
+                                actionObj={control}                           
+                                  />
+                              {/* <Button variant="ghost" size="sm" onClick={() => setEditingControl(control)}>
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button variant="ghost" size="sm" onClick={() => deleteControl(control.id)}>
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </>
                           )}
                         </div>
@@ -655,7 +664,15 @@ function ControlForm({ control, onChange, onSave, onCancel, isEditing = false }:
         </div>
         <div>
           <Label>Last Test Date</Label>
-          <Popover>
+          <Input
+            id="last_test_date"
+            type="date"
+            value={lastTestDate}
+            onChange={(e) => setLastTestDate(e.target.value)}
+          />
+
+          
+          {/* <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -668,11 +685,19 @@ function ControlForm({ control, onChange, onSave, onCancel, isEditing = false }:
             <PopoverContent className="w-auto p-0">
               <Calendar mode="single" selected={lastTestDate} onSelect={setLastTestDate} initialFocus />
             </PopoverContent>
-          </Popover>
+          </Popover> */}
         </div>
         <div>
           <Label>Next Test Date</Label>
-          <Popover>
+          <Input
+            id="next_test_date"
+            type="date"
+            value={nextTestDate}
+            onChange={(e) => setNextTestDate(e.target.value)}
+          />
+
+
+          {/* <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -685,7 +710,7 @@ function ControlForm({ control, onChange, onSave, onCancel, isEditing = false }:
             <PopoverContent className="w-auto p-0">
               <Calendar mode="single" selected={nextTestDate} onSelect={setNextTestDate} initialFocus />
             </PopoverContent>
-          </Popover>
+          </Popover> */}
         </div>
       </div>
 

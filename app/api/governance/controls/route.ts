@@ -108,7 +108,7 @@ export const POST = withContext(async({tenantDb}: HttpSessionContext, request) =
     const {
       name,
       description,
-      control_id,
+      control_id: providedControlId,
       framework,
       category,
       subcategory,
@@ -143,12 +143,34 @@ export const POST = withContext(async({tenantDb}: HttpSessionContext, request) =
     } = body
 
     // Validate required fields
-    if (!name || !control_id || !framework || !category || !owner) {
+    if (!name || !framework || !category || !owner) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
       )
     }
+
+    // Auto-generate control_id in format CTL-YYYY-XXXXXX
+    let control_id = providedControlId
+    if (!control_id) {
+      const currentYear = new Date().getFullYear()
+      const controlIdResult = await tenantDb`
+        SELECT COALESCE(MAX(CAST(SUBSTRING(control_id FROM 10) AS INTEGER)), 0) + 1 as next_id
+        FROM governance_controls 
+        WHERE control_id LIKE ${`CTL-${currentYear}-%`}
+      ` as Record<string, number>[]
+      const nextId = controlIdResult[0]?.next_id || 1
+      control_id = `CTL-${currentYear}-${nextId.toString().padStart(6, "0")}`
+    }
+    const toNullableDate = (value: any) => {
+      if (!value || value === "" || value === "null") return null;
+      return value;
+    };
+
+    const toPgArray = (arr: any) =>
+    Array.isArray(arr) && arr.length > 0
+      ? `{${arr.map((v) => `"${String(v).replace(/"/g, '\\"')}"`).join(",")}}`
+      : "{}";
 
     const result = await tenantDb`
       INSERT INTO governance_controls (
@@ -162,13 +184,25 @@ export const POST = withContext(async({tenantDb}: HttpSessionContext, request) =
       ) VALUES (
         ${name}, ${description}, ${control_id}, ${framework}, ${category}, ${subcategory},
         ${control_type}, ${implementation_status}, ${effectiveness_rating}, ${maturity_level},
-        ${owner}, ${department}, ${responsible_party}, ${implementation_date}, ${last_assessment_date},
-        ${next_assessment_date}, ${assessment_frequency}, ${JSON.stringify(test_results)}, ${evidence_location},
-        ${JSON.stringify(related_risks)}, ${JSON.stringify(related_assets)}, ${JSON.stringify(dependencies)}, ${cost_estimate}, ${maintenance_cost},
-        ${automation_level}, ${monitoring_frequency}, ${reporting_frequency}, ${JSON.stringify(compliance_requirements)},
-        ${JSON.stringify(applicable_regulations)}, ${JSON.stringify(control_measures)}, ${exceptions}, ${remediation_plan}, ${notes}, ${created_by}
-      ) RETURNING *
-    `
+        ${owner}, ${department}, ${responsible_party},
+        ${toNullableDate(implementation_date)},
+        ${toNullableDate(last_assessment_date)},
+        ${toNullableDate(next_assessment_date)},
+        ${assessment_frequency},
+        ${JSON.stringify(test_results)}, -- keep JSON for JSONB column
+        ${evidence_location},
+        ${toPgArray(related_risks)},
+        ${toPgArray(related_assets)},
+        ${toPgArray(dependencies)},
+        ${cost_estimate}, ${maintenance_cost},
+        ${automation_level}, ${monitoring_frequency}, ${reporting_frequency},
+        ${toPgArray(compliance_requirements)},
+        ${toPgArray(applicable_regulations)},
+        ${toPgArray(control_measures)},
+        ${exceptions}, ${remediation_plan}, ${notes}, ${created_by}
+      )
+      RETURNING *;
+    ` as Record<string, any>[]
 
     return NextResponse.json({
       success: true,
