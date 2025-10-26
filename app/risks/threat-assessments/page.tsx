@@ -23,6 +23,7 @@ import { getThreatAssessments, deleteThreatAssessment } from "@/lib/actions/thre
 import { ThreatAssessmentForm } from "@/components/threat-assessment-form"
 import { ThreatAssessmentWizard } from "@/components/threat-assessment-wizard"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 export default function ThreatAssessmentsPage() {
   const [assessments, setAssessments] = useState([])
@@ -211,18 +212,20 @@ export default function ThreatAssessmentsPage() {
                     <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     Refresh
                   </Button>
-                  <Button
+                  <ActionButtons isTableAction={false} onAdd={() => setIsWizardOpen(true)} btnAddText="Assessment Wizard" />
+                  {/* <Button
                     variant="outline"
                     onClick={() => setIsWizardOpen(true)}
                     className="border-slate-600 text-slate-300 hover:bg-slate-700"
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     Assessment Wizard
-                  </Button>
-                  <Button onClick={() => setIsFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  </Button> */}
+                  <ActionButtons isTableAction={false} onAdd={() => setIsFormOpen(true)} btnAddText="Add Assessment" />
+                  {/* <Button onClick={() => setIsFormOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Assessment
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -348,7 +351,14 @@ export default function ThreatAssessmentsPage() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex space-x-2">
-                                    <Button variant="ghost" size="sm" className="hover:bg-slate-700 text-slate-300">
+                                    <ActionButtons isTableAction={true}
+                                      onView={() => {}}
+                                      onEdit={() => {}}
+                                      onDelete={() => handleDeleteAssessment(assessment)}
+                                actionObj={assessment}
+                                      //deleteDialogTitle={}
+                                    />
+                                    {/* <Button variant="ghost" size="sm" className="hover:bg-slate-700 text-slate-300">
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="sm" className="hover:bg-slate-700 text-slate-300">
@@ -361,7 +371,7 @@ export default function ThreatAssessmentsPage() {
                                       className="hover:bg-red-900/20 text-red-400"
                                     >
                                       <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    </Button> */}
                                   </div>
                                 </TableCell>
                               </TableRow>

@@ -16,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { AlertTriangle, Calendar, CheckCircle, Clock, Eye, Plus, Shield, Target, User, History } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface TreatmentPlan {
   id: string
@@ -346,10 +347,11 @@ export function FairRiskTreatmentManager({ riskId, riskTitle, onClose }: FairRis
           <p className="text-muted-foreground">Risk: {riskTitle}</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => openDialog("plan")}>
+          <ActionButtons isTableAction={false} onAdd={() => openDialog("plan")} btnAddText="New Treatment Plan"/>
+          {/* <Button onClick={() => openDialog("plan")}>
             <Plus className="h-4 w-4 mr-2" />
             New Treatment Plan
-          </Button>
+          </Button> */}
           {onClose && (
             <Button variant="outline" onClick={onClose}>
               Close
@@ -415,10 +417,11 @@ export function FairRiskTreatmentManager({ riskId, riskTitle, onClose }: FairRis
                 )}
               </CardTitle>
               {selectedPlan && (
-                <Button size="sm" onClick={() => openDialog("control")}>
+                <ActionButtons isTableAction={false} onAdd={() => openDialog("control")} btnAddText="Add Control"/>
+                {/* <Button size="sm" onClick={() => openDialog("control")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Control
-                </Button>
+                </Button> */}
               )}
             </div>
           </CardHeader>
@@ -495,9 +498,16 @@ export function FairRiskTreatmentManager({ riskId, riskTitle, onClose }: FairRis
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openDialog("view", control)}>
+                            <ActionButtons isTableAction={true} 
+                                  onView={() => openDialog("view", control)} 
+                                actionObj={control}
+                                  //onEdit={() => {}} 
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={}                                
+                                  />
+                            {/* <Button variant="ghost" size="sm" onClick={() => openDialog("view", control)}>
                               <Eye className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                             <Button variant="ghost" size="sm" onClick={() => openDialog("tracking", control)}>
                               <History className="h-4 w-4" />
                             </Button>

@@ -21,6 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast"
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts"
 import { Plus, FileText, CheckCircle, AlertTriangle, Clock, TrendingUp, BarChart3, Target, Star } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MICASelfAssessment {
   id: string
@@ -208,10 +209,11 @@ export function MICASelfAssessment() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Self Assessment"/>
+            {/* <Button>
               <Plus className="mr-2 h-4 w-4" />
               New Self-Assessment
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

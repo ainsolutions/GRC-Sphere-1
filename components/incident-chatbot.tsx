@@ -11,6 +11,7 @@ import { MessageCircle, Send, X, Bot, User, Loader2 } from "lucide-react"
 import { createIncidentFromChatbot } from "@/lib/actions/incident-actions"
 import { toast } from "@/hooks/use-toast"
 import { ChatbotButton } from "./ui/chatbotButton"
+import { generateIncidentId } from "@/app/incidents/page"
 
 interface Message {
   id: string
@@ -231,9 +232,10 @@ export function IncidentChatbot({ onIncidentCreated }: IncidentChatbotProps) {
     await addBotMessage("Submitting your incident report...", 500)
 
     try {
+
       // Update the createIncidentFromChatbot call to use the correct field names
       const result = await createIncidentFromChatbot({
-        incident_id: incidentData.incident_id,
+        incident_id: generateIncidentId(),
         incident_title: incidentData.incident_title,
         incident_description: incidentData.incident_description,
         incident_type: incidentData.incident_type,

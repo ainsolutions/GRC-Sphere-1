@@ -184,7 +184,7 @@ export default function NISTCSFPage() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="dashboard" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
-                Cyber Intelligence Hub
+                Cyber Hub
               </TabsTrigger>
               <TabsTrigger value="templates" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />

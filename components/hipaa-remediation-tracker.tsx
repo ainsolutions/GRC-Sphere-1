@@ -37,6 +37,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface HIPAARemediationAction {
   id: number
@@ -489,10 +490,11 @@ export function HIPAARemediationTracker({ assessmentId }: HIPAARemediationTracke
           </Button>
           <Dialog open={isNewActionOpen} onOpenChange={setIsNewActionOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Remediation Action"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New Remediation Action
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -934,7 +936,30 @@ export function HIPAARemediationTracker({ assessmentId }: HIPAARemediationTracke
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true} 
+                                  onView={() => {
+                                    setSelectedAction(action)
+                                    fetchActionUpdates(action.id)
+                                    setIsActionDetailOpen(true)
+                                  }} 
+                                  onEdit={() => {
+                                    setSelectedAction(action)
+                                    setActionUpdate({
+                                      remediation_status: action.remediation_status,
+                                      progress_percentage: action.progress_percentage.toString(),
+                                      update_comment: "",
+                                      evidence_provided: action.evidence_provided || "",
+                                      verification_status: action.verification_status || "",
+                                      verification_comments: action.verification_comments || "",
+                                    })
+                                    setIsUpdateActionOpen(true)
+                                  }
+                                  } 
+                                actionObj={action}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={}                                
+                                  />
+                                {/* <Button
                                   variant="ghost"
                                   size="sm"
                                   className="hover:bg-blue-100"
@@ -964,7 +989,7 @@ export function HIPAARemediationTracker({ assessmentId }: HIPAARemediationTracke
                                   }}
                                 >
                                   <Edit className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

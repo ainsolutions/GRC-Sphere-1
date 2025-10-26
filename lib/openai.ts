@@ -16,14 +16,14 @@ export async function generateAIText(
       throw new Error("OpenAI API key is not configured");
     }
 
-    const modelName = options?.model || "gpt-4o-2024-05-13";
+    const modelName = options?.model || "gpt-4o-mini";
     const model = openaiClient(modelName); // ✅ correct way to call the model
 
     const result = await generateText({
       model,
       prompt,
-      maxOutputTokens: options?.maxTokens || 1000,  // ✅ correct property name
-           temperature: options?.temperature ?? 0.7,
+      maxOutputTokens: options?.maxTokens || 1000, // ✅ correct property name
+      temperature: options?.temperature ?? 0.7,
     });
 
     return {

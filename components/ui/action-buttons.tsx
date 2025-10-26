@@ -9,7 +9,7 @@ interface ActionButtonsProps {
   onEdit?: (actionObj: any) => void;
   onDelete?: (actionObj: any) => void;
   actionObj?: any;
-  btnText?: string;
+  btnAddText?: string;
   deleteDialogTitle?: string;
 }
 

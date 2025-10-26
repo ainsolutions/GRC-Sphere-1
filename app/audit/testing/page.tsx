@@ -34,6 +34,7 @@ import {
     Upload,
     Download,
   } from "lucide-react"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 interface TestingPlan {
   id: number
@@ -580,10 +581,11 @@ export default function ControlsTestingPage() {
                   </div>
                   <Dialog open={isCreatePlanDialogOpen} onOpenChange={setIsCreatePlanDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="Create Plan"/>
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Create Plan
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -741,12 +743,13 @@ export default function ControlsTestingPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  onEdit={() => {}} 
+                                actionObj={plan}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={plan.plan_name}                                
+                                  />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -769,10 +772,11 @@ export default function ControlsTestingPage() {
                   </div>
                   <Dialog open={isCreateResultDialogOpen} onOpenChange={setIsCreateResultDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                      <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="Add Result"/>
+                      {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Result
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -913,12 +917,13 @@ export default function ControlsTestingPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  onEdit={() => {}} 
+                                actionObj={result}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={result.result_name}                                
+                                  />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -1102,15 +1107,22 @@ export default function ControlsTestingPage() {
                           <TableCell>{new Date(item.upload_date).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm">
+                              <ActionButtons isTableAction={true} 
+                                  onView={() => {}} 
+                                  //onEdit={() => {}} 
+                                  onDelete={() => {}}   
+                                actionObj={item}
+                                  deleteDialogTitle={item.evidence_name}                                
+                                  />
+                              {/* <Button variant="ghost" size="sm">
                                 <Eye className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                               <Button variant="ghost" size="sm">
                                 <Download className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="sm">
+                              {/* <Button variant="ghost" size="sm">
                                 <Trash2 className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>

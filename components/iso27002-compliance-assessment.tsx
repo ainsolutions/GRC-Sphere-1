@@ -22,6 +22,7 @@ import {
   Clock,
   Plus,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 // Mock data for ISO 27002 controls
 const mockAssessments = [
@@ -366,10 +367,17 @@ export function ISO27002ComplianceAssessment() {
                           {category.assessedCount} / {category.controlCount}
                         </span>
                       </div>
-                      <Button variant="outline" className="w-full mt-3 bg-transparent">
+                      <ActionButtons isTableAction={true}
+                        onView={() => { }}
+                                actionObj={category}
+                      // onEdit={() => {}} 
+                      // onDelete={() => {}}   
+                      // deleteDialogTitle={}                                
+                      />
+                      {/* <Button variant="outline" className="w-full mt-3 bg-transparent">
                         <Eye className="h-4 w-4 mr-2" />
                         View Controls
-                      </Button>
+                      </Button> */}
                     </div>
                   </CardContent>
                 </Card>
@@ -442,10 +450,11 @@ export function ISO27002ComplianceAssessment() {
                 Manage and track ISO 27002:2022 information security control assessments
               </CardDescription>
             </div>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New Assessment" />
+            {/* <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
               <Plus className="mr-2 h-4 w-4" />
               New Assessment
-            </Button>
+            </Button> */}
           </div>
         </CardHeader>
         <CardContent>
@@ -544,10 +553,17 @@ export function ISO27002ComplianceAssessment() {
                 <div className="flex items-center justify-between pt-2 border-t">
                   <span className="text-xs text-muted-foreground">Last updated: {assessment.lastUpdated}</span>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
+                    <ActionButtons isTableAction={true}
+                      onView={() => { }}
+                                actionObj={assessment}
+                    // onEdit={() => {}} 
+                    // onDelete={() => {}}   
+                    // deleteDialogTitle={}                                
+                    />
+                    {/* <Button variant="outline" size="sm">
                       <Eye className="h-4 w-4 mr-1" />
                       View Details
-                    </Button>
+                    </Button> */}
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-1" />
                       Export
@@ -568,10 +584,11 @@ export function ISO27002ComplianceAssessment() {
             <p className="text-sm text-muted-foreground mb-4">
               Create your first ISO 27002 compliance assessment to get started.
             </p>
-            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Create Assessment" />
+            {/* <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
               <Plus className="mr-2 h-4 w-4" />
               Create Assessment
-            </Button>
+            </Button> */}
           </CardContent>
         </Card>
       )}

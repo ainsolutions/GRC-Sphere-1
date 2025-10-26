@@ -38,6 +38,7 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react"
+import { ActionButtons } from "../ui/action-buttons"
 
 interface SystemConfig {
   id: number
@@ -281,9 +282,10 @@ export function SystemConfiguration() {
       return (
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground">••••••••</span>
-          <Button variant="ghost" size="sm" onClick={() => toggleSensitiveVisibility(config.id)}>
-            <Eye className="h-4 w-4" />
-          </Button>
+          <ActionButtons isTableAction={true}
+            onView={() => toggleSensitiveVisibility(config.id)}
+                                actionObj={config}
+          />
         </div>
       )
     }
@@ -380,15 +382,10 @@ export function SystemConfiguration() {
                   )}
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button
-                        onClick={() => {
-                          resetForm()
-                          setEditingConfig(null)
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Setting
-                      </Button>
+                      <ActionButtons isTableAction={false} onAdd={() => {
+                        resetForm()
+                        setEditingConfig(null);
+                      }} btnAddText="Add Setting" />                      
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
                       <DialogHeader>
@@ -567,17 +564,12 @@ export function SystemConfiguration() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handleEdit(config)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(config.id)}
-                                className="text-red-600 hover:text-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <ActionButtons isTableAction={true}
+                                onEdit={() => handleEdit(config)}
+                                onDelete={() => handleDelete(config.id)}
+                                deleteDialogTitle={config.description}
+                                actionObj={config}
+                              />
                             </div>
                           </TableCell>
                         </TableRow>

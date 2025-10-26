@@ -46,6 +46,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface HIPAARequirement {
   id: string
@@ -322,10 +323,11 @@ export function HIPAAComplianceAssessment() {
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Assessment"/>
+            {/* <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               New Assessment
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -469,7 +471,14 @@ export function HIPAAComplianceAssessment() {
                   <TableCell>{new Date(assessment.start_date).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleViewAssessment(assessment)}>
+                      <ActionButtons isTableAction={true} 
+                                  onView={() => handleViewAssessment(assessment)} 
+                                  onEdit={() => openEditDialog(assessment)} 
+                                  onDelete={() => handleDeleteAssessment(assessment.id)}   
+                                  deleteDialogTitle={assessment.title}      
+                                actionObj={assessment}                          
+                                  />
+                      {/* <Button variant="outline" size="sm" onClick={() => handleViewAssessment(assessment)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => openEditDialog(assessment)}>
@@ -495,7 +504,7 @@ export function HIPAAComplianceAssessment() {
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
+                      </AlertDialog> */}
                     </div>
                   </TableCell>
                 </TableRow>

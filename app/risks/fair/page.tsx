@@ -58,6 +58,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { FairRiskImportExport } from "@/components/fair-risk-import-export"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 interface FairRisk {
   id: number
@@ -125,9 +126,13 @@ interface TreatmentStats {
 
 interface Asset {
   id: string
-  name: string
-  type: string
-  criticality: string
+  asset_id: string
+  asset_name: string
+  asset_type: string
+  classification?: string
+  business_value?: string
+  owner?: string
+  location?: string
 }
 
 type SortField =
@@ -429,8 +434,9 @@ function FairRiskForm({
   onSubmit: (data: any) => Promise<void>
   editingRisk?: FairRisk | null
 }) {
-  const [loading, setLoading] = useState(false)
-  const [assets, setAssets] = useState<Asset[]>([])
+  const [loading, setLoading] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -458,22 +464,26 @@ function FairRiskForm({
   const { toast } = useToast()
 
   useEffect(() => {
-    const fetchAssets = async () => {
+    async function loadAssets() {
       try {
-        const response = await fetch("/api/assets")
-        if (response.ok) {
-          const assetsData = await response.json()
-          setAssets(Array.isArray(assetsData) ? assetsData : [])
-        } else {
-          setAssets([])
-        }
-      } catch (error) {
-        console.error("Failed to fetch assets:", error)
-        setAssets([])
+        const res = await fetch("/api/assets/search?limit=100"); // or your main assets route
+        const data = await res.json();
+
+        const fetchedAssets =
+          data.success && data.data?.assets
+            ? data.data.assets
+            : data.assets || [];
+
+        setAssets(fetchedAssets);
+        console.log("Loaded assets:", fetchedAssets.length);
+      } catch (err) {
+        console.error("Failed to load assets:", err);
+        setAssets([]);
       }
     }
-    fetchAssets()
-  }, [])
+
+    loadAssets();
+  }, []);
 
   useEffect(() => {
     if (editingRisk) {
@@ -647,8 +657,8 @@ function FairRiskForm({
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="asset_id">Asset</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="asset">Asset</Label>
                     <Select
                       value={formData.asset_id}
                       onValueChange={(value) => setFormData((prev) => ({ ...prev, asset_id: value }))}
@@ -657,12 +667,17 @@ function FairRiskForm({
                         <SelectValue placeholder="Select an asset" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.isArray(assets) &&
+                        {assets.length > 0 ? (
                           assets.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.id}>
-                              {asset.name} ({asset.type})
+                            <SelectItem key={asset.asset_id} value={asset.asset_id}>
+                              {asset.asset_name} ({asset.asset_type})
                             </SelectItem>
-                          ))}
+                          ))
+                        ) : (
+                          <SelectItem value="no-assets" disabled>
+                            No assets available
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -687,11 +702,10 @@ function FairRiskForm({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="identified">Identified</SelectItem>
-                        <SelectItem value="assessed">Assessed</SelectItem>
-                        <SelectItem value="treated">Treated</SelectItem>
-                        <SelectItem value="monitored">Monitored</SelectItem>
-                        <SelectItem value="accepted">Accepted</SelectItem>
+                        <SelectItem value="planned">Planned</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="deferred">Deferred</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1546,11 +1560,12 @@ export default function FairRiskAnalysisPage() {
               <div className="flex gap-2">
                 <FairRiskImportExport onImportComplete={fetchData} currentFilters={{ treatment_status: "all" }} />
 
-                <Button
+                <ActionButtons isTableAction={false} onAdd={() => setIsFormOpen(true)} btnAddText="Create FAIR Risk"/>
+                {/* <Button
                   onClick={() => setIsFormOpen(true)}
                 >
                   Create FAIR Risk
-                </Button>
+                </Button> */}
               </div>
             </div>
 

@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { createAsset, updateAsset } from "@/lib/actions/asset-actions"
 import { Save, X, Shield, Database, MapPin, Target } from "lucide-react"
 import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
 
 interface AssetFormProps {
   asset?: any
@@ -29,6 +30,7 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
     asset_name: "",
     asset_type: "",
     custodian: "",
+    department: "",
     retention_period: "",
     disposal_method: "",
     ip_address: "",
@@ -48,12 +50,14 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (asset) {
+    if (!asset || Object.keys(asset).length === 0) return;
+    
       setFormData({
         asset_id: asset.asset_id || `AST-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         asset_name: asset.asset_name || "",
         asset_type: asset.asset_type || "",
         custodian: asset.custodian || "",
+        department: asset.department || "",
         retention_period: asset.retention_period || "",
         disposal_method: asset.disposal_method || "",
         ip_address: asset.ip_address || "",
@@ -67,7 +71,7 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
         description: asset.description || "",
         location: asset.location || "",
       })
-    }
+    
   }, [asset])
 
   const handleInputChange = (field: string, value: string) => {
@@ -175,7 +179,7 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
               )}
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
+            {!asset && (<div className="space-y-2">
                 <Label htmlFor="asset_id">Asset ID</Label>
                 <div className="flex gap-2 items-center">
                   <Input
@@ -186,7 +190,7 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
                     className="font-mono"
                     required
                   />
-                  {!asset && (
+                  {/* {!asset && ( */}
                     <Button
                       type="button"
                       size="sm"
@@ -194,10 +198,12 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
                     >
                       Generate New
                     </Button>
-                  )}
+                  {/* )} */}
                 </div>
                 <p className="text-sm text-muted-foreground">Unique identifier for this asset (format: AST-XXXXXX)</p>
               </div>
+            )}
+              
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -211,8 +217,8 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="asset_type">Asset Type *</Label>
-                  <Select value={formData.asset_type} onValueChange={(value) => handleInputChange("asset_type", value)}>
+                  <Label htmlFor="asset_type">Asset Type * </Label>
+                  <Select value={formData.asset_type} onValueChange={(value) => { handleInputChange("asset_type", value)}}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select asset type" />
                     </SelectTrigger>
@@ -229,14 +235,44 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
                 </div>
               </div>
 
+             
+
               <div className="space-y-2">
-                <Label htmlFor="custodian">Custodian</Label>
-                <Input
-                  id="custodian"
-                  value={formData.custodian}
-                  onChange={(e) => handleInputChange("custodian", e.target.value)}
-                  placeholder="Enter custodian"
+                <Label htmlFor="custodian">Custodian Department</Label>
+                <DepartmentSelectInput 
+                  formData={formData} 
+                  setFormData={setFormData} 
+                  fieldName="custodian"
+                  onDepartmentSelected={(custodian) => {
+                    // Update form data with selected department name
+                    setFormData({
+                      ...formData,
+                      department: department.name
+                    });
+                  }}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Search and select department from the organization
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department">Department Owner</Label>
+                <DepartmentSelectInput 
+                  formData={formData} 
+                  setFormData={setFormData} 
+                  fieldName="department"
+                  onDepartmentSelected={(department) => {
+                    // Update form data with selected department name
+                    setFormData({
+                      ...formData,
+                      department: department.name
+                    });
+                  }}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Search and select department from the organization
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -281,7 +317,7 @@ export function AssetForm({ asset, onSuccess, onCancel }: AssetFormProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div id="divAssetOwner" className="space-y-2">
-                  <Label htmlFor="owner">Asset Owner *</Label>
+                  <Label htmlFor="owner">Custodian Owner *</Label>
                   <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName='owner'/>
                 </div>
                 {/* <div id="idAssetOwner" className="space-y-2">

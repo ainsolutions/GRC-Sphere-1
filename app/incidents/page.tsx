@@ -40,8 +40,12 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { createIncident, updateIncident, getIncidents, searchAssets, searchRisks } from "@/lib/actions/incident-actions"
 import { IncidentChatbot } from "@/components/incident-chatbot"
+import { IncidentDashboard } from "@/components/incident-dashboard"
 import OwnerSelectInput from "@/components/owner-search-input"
+import RiskSelectInput from "@/components/risk-search-input"
 import StarBorder from "../StarBorder"
+import { ActionButtons } from "@/components/ui/action-buttons"
+import AssetSelectInput from "@/components/asset-search-input"
 
 interface Incident {
   id: number
@@ -205,7 +209,7 @@ const remediationTypes = [
 ]
 
 // Generate incremental incident ID
-function generateIncidentId(): string {
+export function generateIncidentId(): string {
   const currentYear = new Date().getFullYear()
   const timestamp = Date.now().toString().slice(-6)
   return `INCT-${currentYear}-${timestamp}`
@@ -317,6 +321,49 @@ export default function IncidentsPage() {
     loadIso27001Risks()
   }, [])
 
+  useEffect(() => {
+    async function loadDropdownData() {
+      try {
+        const [assetsRes, risksRes] = await Promise.all([
+          fetch("/api/assets/lookup", { cache: "no-store" }),
+          fetch("/api/risks/lookup", { cache: "no-store" }),
+        ]);
+
+        if (!assetsRes.ok || !risksRes.ok) {
+          console.error("Failed to fetch one or more dropdown sources");
+          return;
+        }
+
+        const assetsJson = await assetsRes.json();
+        const risksJson = await risksRes.json();
+
+        // Normalize in case backend wraps data
+        const assetsArray = Array.isArray(assetsJson.data)
+          ? assetsJson.data
+          : Array.isArray(assetsJson)
+          ? assetsJson
+          : [];
+        const risksArray = Array.isArray(risksJson.data)
+          ? risksJson.data
+          : Array.isArray(risksJson)
+          ? risksJson
+          : [];
+
+        setAssets(assetsArray);
+        setRisks(risksArray);
+
+        console.log("Assets loaded:", assetsArray.length);
+        console.log("Risks loaded:", risksArray.length);
+      } catch (error) {
+        console.error("Error loading dropdown data:", error);
+      }
+    }
+
+    loadDropdownData();
+  }, []);
+
+
+
   // Filter incidents based on search and filters
   useEffect(() => {
     let filtered = incidents
@@ -426,7 +473,7 @@ export default function IncidentsPage() {
         toast({ title: "Error", description: result.error, variant: "destructive" })
       }
     }
-     catch (error) {
+    catch (error) {
       toast({
         title: "Error",
         description: "Failed to create incident",
@@ -770,85 +817,61 @@ export default function IncidentsPage() {
                       </div>
                     </div>
                   </div>
-
                   {/* Related Items */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Related Items</h3>
                     <div className="grid grid-cols-2 gap-4">
+
+                      {/* Related Asset Dropdown */}
                       <div className="space-y-2">
                         <Label htmlFor="related_asset">Related Asset</Label>
-                        <div className="relative">
-                          <Input
-                            id="related_asset"
-                            value={assetSearchTerm}
-                            onChange={(e) => {
-                              setAssetSearchTerm(e.target.value)
-                              handleAssetSearch(e.target.value)
-                            }}
-                            className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-white/20"
-                            placeholder="Search assets..."
-                          />
-                          <Building className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          {assets.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-40 overflow-y-auto">
-                              {assets.map((asset) => (
-                                <div
-                                  key={asset.id}
-                                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                  onClick={() => {
-                                    setFormData({ ...formData, related_asset_id: asset.id.toString() })
-                                    setAssetSearchTerm(`${asset.asset_name} (${asset.asset_id})`)
-                                    setAssets([])
-                                  }}
-                                >
-                                  <div className="font-medium">{asset.asset_name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {asset.asset_id} - {asset.asset_type}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <AssetSelectInput formData={formData} setFormData={setFormData} fieldName="related_asset_id" />
+                        {/* <Select
+                          value={formData.related_asset_id}
+                          onValueChange={(value) => setFormData({ ...formData, related_asset_id: value })}
+                        >
+                          <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-white/20">
+                            <SelectValue placeholder="Select asset" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-white/20 max-h-64 overflow-y-auto">
+                            {assets.length > 0 ? (
+                              assets.map((asset) => (
+                                <SelectItem key={asset.id} value={asset.id.toString()}>
+                                  {asset.asset_name} ({asset.asset_id}) – {asset.asset_type}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>
+                                No assets available
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select> */}
                       </div>
+
+                      {/* Related Risk Search */}
                       <div className="space-y-2">
                         <Label htmlFor="related_risk">Related Risk</Label>
-                        <div className="relative">
-                          <Input
-                            id="related_risk"
-                            value={riskSearchTerm}
-                            onChange={(e) => {
-                              setRiskSearchTerm(e.target.value)
-                              handleRiskSearch(e.target.value)
-                            }}
-                            className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-white/20"
-                            placeholder="Search risks..."
-                          />
-                          <Target className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                          {risks.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-md shadow-lg max-h-40 overflow-y-auto">
-                              {risks.map((risk) => (
-                                <div
-                                  key={risk.id}
-                                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                  onClick={() => {
-                                    setFormData({ ...formData, related_risk_id: risk.id.toString() })
-                                    setRiskSearchTerm(`${risk.title} (${risk.risk_id})`)
-                                    setRisks([])
-                                  }}
-                                >
-                                  <div className="font-medium">{risk.title}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {risk.risk_id} - Score: {risk.risk_score}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                        <RiskSelectInput
+                          formData={formData}
+                          setFormData={setFormData}
+                          fieldName="related_risk_id"
+                          onRiskSelected={(risk) => {
+                            // Store the risk ID for backend
+                            setFormData({ 
+                              ...formData, 
+                              related_risk_id: risk.id 
+                            });
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Search across ISO27001, NIST CSF, and FAIR risks
+                        </p>
                       </div>
+
                     </div>
                   </div>
+
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button
@@ -912,11 +935,16 @@ export default function IncidentsPage() {
           </Card>
         </div>
 
-        <Tabs defaultValue="incidents" className="space-y-4">
+        <Tabs defaultValue="dashboard" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="incidents">Incidents</TabsTrigger>
             <TabsTrigger value="remediation">Remediation Tracking</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-4">
+            <IncidentDashboard incidents={incidents} />
+          </TabsContent>
 
           <TabsContent value="incidents" className="space-y-4">
             {/* Filters and Search */}
@@ -1034,7 +1062,14 @@ export default function IncidentsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => { }}
+                              onEdit={() => openEditDialog(incident)}
+                              onDelete={() => { }}
+                                actionObj={incident}
+                              deleteDialogTitle={incident.asset_name}
+                            />
+                            {/* <Button
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
@@ -1055,7 +1090,7 @@ export default function IncidentsPage() {
                               className="h-8 w-8 p-0 text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1076,13 +1111,14 @@ export default function IncidentsPage() {
                   </div>
                   <Dialog open={isRemediationDialogOpen} onOpenChange={setIsRemediationDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button
+                      <ActionButtons isTableAction={false} onAdd={openRemediationDialog} btnAddText="Add Remediation Action" />
+                      {/* <Button
                         variant="outline"
                         onClick={openRemediationDialog}
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Remediation Action
-                      </Button>
+                      </Button> */}
                     </DialogTrigger>
                     <DialogContent className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-white/20 max-w-4xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
@@ -1119,23 +1155,22 @@ export default function IncidentsPage() {
                               </Select>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="risk_id">Related Risk (ISO27001)</Label>
-                              <Select
-                                value={remediationForm.risk_id}
-                                onValueChange={(value) => setRemediationForm({ ...remediationForm, risk_id: value })}
-                              >
-                                <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-white/20">
-                                  <SelectValue placeholder="Select risk" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-white/20">
-                                  {Array.isArray(iso27001Risks) &&
-                                    iso27001Risks.map(risk => (
-                                      <SelectItem key={risk.id} value={risk.id.toString()}>
-                                        {risk.risk_id} – {risk.title}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
+                              <Label htmlFor="risk_id">Related Risk</Label>
+                              <RiskSelectInput
+                                formData={remediationForm}
+                                setFormData={setRemediationForm}
+                                fieldName="risk_id"
+                                onRiskSelected={(risk) => {
+                                  // Store the risk ID for backend
+                                  setRemediationForm({ 
+                                    ...remediationForm, 
+                                    risk_id: risk.id 
+                                  });
+                                }}
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Search across ISO27001, NIST CSF, and FAIR risks
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1414,7 +1449,14 @@ export default function IncidentsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Button
+                              <ActionButtons isTableAction={true}
+                                onView={() => { }}
+                                onEdit={() => {}}
+                                actionObj={action}
+                                //onDelete={() => {}}
+                                //deleteDialogTitle={action.incident_title}
+                              />
+                              {/* <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
@@ -1427,7 +1469,7 @@ export default function IncidentsPage() {
                                 className="h-8 w-8 p-0"
                               >
                                 <Edit className="h-4 w-4" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>

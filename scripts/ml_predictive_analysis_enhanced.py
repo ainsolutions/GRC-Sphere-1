@@ -418,17 +418,17 @@ class EnhancedGRCPredictiveAnalyzer:
                 f"Risk remediation rate: {features_df.get('remediation_rate', [0])[0]:.1%}",
                 f"High/critical risk ratio: {features_df.get('high_risk_count', [0])[0]}/{features_df.get('total_risks', [0])[0]}"
             ]
-            if prediction > 80:
+            if prediction > 70:
                 reasoning['recommended_actions'] = [
-                    "Open risks shows lack of focus on risk treatment plans. It is recommended to conduct immediate risk assessment workshop to identify the root causes of the risks and to develop a risk treatment plan.",
-                    "Prioritize critical and high-risk items to be addressed first.",
-                    "Allocate additional resources to risk remediation to ensure the risks are addressed in a timely manner.",
-                    "Review and update risk management processes to ensure the risks are managed effectively."
+                    "Conduct immediate risk assessment workshop",
+                    "Prioritize critical and high-risk items",
+                    "Allocate additional resources to risk remediation",
+                    "Review and update risk management processes"
                 ]
                 reasoning['monitoring_points'] = [
-                    "Weekly risk status updates to track the progress of the risk treatment plans.",
-                    "Monthly risk exposure trend analysis to identify the risks that are not being addressed in a timely manner.",
-                    "Quarterly risk management effectiveness review to evaluate the effectiveness of the risk management processes."
+                    "Weekly risk status updates",
+                    "Monthly risk exposure trend analysis",
+                    "Quarterly risk management effectiveness review"
                 ]
 
         elif metric == 'compliance_level':

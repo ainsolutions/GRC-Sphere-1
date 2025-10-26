@@ -69,8 +69,10 @@ export const GET = withContext(async ({ tenantDb }, request) => {
 
     const result = await tenantDb`
       SELECT id,name,description,category,severity,cvss_score,cve_id,affected_systems,
-             remediation_status,remediation_notes,assigned_to,priority,tat_days,
+             assets,remediation_status,remediation_notes,assigned_to,priority,tat_days,
              remediation_due_date,remediation_completed_date,tags,external_references,
+             remediation_department,remediation_departmental_unit,
+             epss_score,epss_percentile,epss_last_updated,
              created_at,updated_at
       FROM vulnerabilities
       ${tenantDb.unsafe(whereClause)}
@@ -98,12 +100,15 @@ export const POST = withContext(async ({ tenantDb }, request) => {
       affected_systems = [],
       remediation_status = "Open",
       assigned_to,
+      remediation_department,
+      remediation_departmental_unit,
       priority = 3,
       external_references = [],
       tags = [],
       remediation_notes,
       remediation_due_date,
       cve_id,
+      assets = [],
     } = body
 
     const result = await tenantDb`
@@ -114,8 +119,11 @@ export const POST = withContext(async ({ tenantDb }, request) => {
         cvss_score,
         category,
         affected_systems,
+        assets,
         remediation_status,
         assigned_to,
+        remediation_department,
+        remediation_departmental_unit,
         priority,
         external_references,
         tags,
@@ -131,8 +139,11 @@ export const POST = withContext(async ({ tenantDb }, request) => {
         ${cvss_score},
         ${category},
         ${JSON.stringify(affected_systems)},   -- ✅ convert array/object to JSON
+        ${JSON.stringify(assets)},             -- ✅ convert assets array to JSON
         ${remediation_status},
         ${assigned_to},
+        ${remediation_department || null},
+        ${remediation_departmental_unit || null},
         ${priority},
         ${JSON.stringify(external_references)}, -- ✅ ensure JSONB insert
         ${JSON.stringify(tags)},                -- ✅ ensure JSONB insert

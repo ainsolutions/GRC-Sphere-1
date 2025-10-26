@@ -38,6 +38,10 @@ import {
   Unlock,
   Loader2,
 } from "lucide-react"
+import OwnerSelectInput from "@/components/owner-search-input"
+import FrameworkSelectInput from "@/components/framework-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 // Interface for governance control data from API
 interface GovernanceControl {
@@ -137,10 +141,10 @@ export default function GovernanceControls() {
   useEffect(() => {
     let filtered = controls.filter(control => {
       const matchesSearch = control.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           control.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           control.control_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (control.control_measures && control.control_measures.some(measure => 
-                             measure.toLowerCase().includes(searchTerm.toLowerCase())))
+        control.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        control.control_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (control.control_measures && control.control_measures.some(measure =>
+          measure.toLowerCase().includes(searchTerm.toLowerCase())))
       const matchesType = selectedType === "All" || control.control_type === selectedType
 
       return matchesSearch && matchesType
@@ -156,7 +160,7 @@ export default function GovernanceControls() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-      ...controlData,
+          ...controlData,
           created_by: 'Current User' // This should be replaced with actual user from session
         }),
       })
@@ -165,11 +169,11 @@ export default function GovernanceControls() {
 
       if (result.success) {
         await fetchControls() // Refresh the controls list
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "Control Created",
-      description: "New control has been successfully created.",
-    })
+        setIsCreateDialogOpen(false)
+        toast({
+          title: "Control Created",
+          description: "New control has been successfully created.",
+        })
       } else {
         toast({
           title: "Error",
@@ -197,7 +201,7 @@ export default function GovernanceControls() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-      ...controlData,
+          ...controlData,
           updated_by: 'Current User' // This should be replaced with actual user from session
         }),
       })
@@ -206,12 +210,12 @@ export default function GovernanceControls() {
 
       if (result.success) {
         await fetchControls() // Refresh the controls list
-    setIsEditDialogOpen(false)
-    setEditingControl(null)
-    toast({
-      title: "Control Updated",
-      description: "Control has been successfully updated.",
-    })
+        setIsEditDialogOpen(false)
+        setEditingControl(null)
+        toast({
+          title: "Control Updated",
+          description: "Control has been successfully updated.",
+        })
       } else {
         toast({
           title: "Error",
@@ -239,10 +243,10 @@ export default function GovernanceControls() {
 
       if (result.success) {
         await fetchControls() // Refresh the controls list
-    toast({
-      title: "Control Deleted",
-      description: "Control has been successfully deleted.",
-    })
+        toast({
+          title: "Control Deleted",
+          description: "Control has been successfully deleted.",
+        })
       } else {
         toast({
           title: "Error",
@@ -325,10 +329,7 @@ export default function GovernanceControls() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="default">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Control
-                </Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Control" />
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -509,21 +510,21 @@ export default function GovernanceControls() {
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
               Governance Controls ({filteredControls.length})
-                      </CardTitle>
+            </CardTitle>
             <CardDescription>
               Manage and monitor governance controls and their effectiveness
-                      </CardDescription>
-              </CardHeader>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Loading controls...</span>
-                  </div>
+              </div>
             ) : filteredControls.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No controls found. Try adjusting your filters or create a new control.
-                  </div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -536,7 +537,7 @@ export default function GovernanceControls() {
                       <TableHead>Type</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Effectiveness</TableHead>
-                      <TableHead>Owner</TableHead>
+                      <TableHead>Control Owner</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Last Assessment</TableHead>
                       <TableHead>Next Assessment</TableHead>
@@ -553,11 +554,11 @@ export default function GovernanceControls() {
                           <div className="max-w-xs">
                             <div className="font-semibold truncate" title={control.name}>
                               {control.name}
-                  </div>
+                            </div>
                             <div className="text-sm text-gray-500 truncate" title={control.description}>
                               {control.description}
-                  </div>
-                </div>
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">{control.framework}</Badge>
@@ -569,12 +570,12 @@ export default function GovernanceControls() {
                           <div className="flex items-center gap-2">
                             {getTypeIcon(control.control_type)}
                             <span className="text-sm">{control.control_type}</span>
-                    </div>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(control.implementation_status)}>
                             {control.implementation_status.replace('_', ' ')}
-                    </Badge>
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className={getEffectivenessColor(control.effectiveness_rating)}>
@@ -584,46 +585,36 @@ export default function GovernanceControls() {
                         <TableCell className="text-sm">{control.owner}</TableCell>
                         <TableCell className="text-sm">{control.department}</TableCell>
                         <TableCell className="text-sm">
-                          {control.last_assessment_date ? 
-                            new Date(control.last_assessment_date).toLocaleDateString() : 
+                          {control.last_assessment_date ?
+                            new Date(control.last_assessment_date).toLocaleDateString() :
                             'Not assessed'
                           }
                         </TableCell>
                         <TableCell className="text-sm">
-                          {control.next_assessment_date ? 
-                            new Date(control.next_assessment_date).toLocaleDateString() : 
+                          {control.next_assessment_date ?
+                            new Date(control.next_assessment_date).toLocaleDateString() :
                             'Not scheduled'
                           }
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                              variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingControl(control)
-                      setIsEditDialogOpen(true)
-                    }}
-                  >
-                              <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                              variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteControl(control.id)}
-                  >
-                              <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                            <ActionButtons isTableAction={true}
+                              onView={() => { }}
+                              onEdit={() => {
+                                setEditingControl(control)
+                                setIsEditDialogOpen(true)
+                              }}
+                              onDelete={() => handleDeleteControl(control.id)}
+                                actionObj={control}
+                              deleteDialogTitle={control.name}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
-          ))}
+                    ))}
                   </TableBody>
                 </Table>
-        </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -637,8 +628,8 @@ export default function GovernanceControls() {
                 Update the control details and configuration.
               </DialogDescription>
             </DialogHeader>
-            <ControlForm 
-              control={editingControl || undefined} 
+            <ControlForm
+              control={editingControl || undefined}
               onSubmit={handleEditControl}
               onCancel={() => {
                 setIsEditDialogOpen(false)
@@ -653,7 +644,7 @@ export default function GovernanceControls() {
 }
 
 // Control Form Component
-function ControlForm({ control, onSubmit, onCancel }: { 
+function ControlForm({ control, onSubmit, onCancel }: {
   control?: GovernanceControl
   onSubmit: (data: any) => void
   onCancel?: () => void
@@ -691,6 +682,8 @@ function ControlForm({ control, onSubmit, onCancel }: {
     e.preventDefault()
     const controlData = {
       ...formData,
+      // Only include control_id if editing (it exists), otherwise let API auto-generate
+      control_id: control?.control_id || undefined,
       compliance_requirements: formData.compliance_requirements.split(",").map(f => f.trim()).filter(f => f),
       applicable_regulations: formData.applicable_regulations.split(",").map(r => r.trim()).filter(r => r),
       control_measures: formData.control_measures.split(",").map(m => m.trim()).filter(m => m),
@@ -716,11 +709,15 @@ function ControlForm({ control, onSubmit, onCancel }: {
           <Label htmlFor="control_id">Control ID</Label>
           <Input
             id="control_id"
-            value={formData.control_id}
-            onChange={(e) => setFormData({ ...formData, control_id: e.target.value })}
-            placeholder="e.g., A.9.1.1, PR.DS-1"
-            required
+            value={formData.control_id || `CTL-${new Date().getFullYear()}-XXXXXX (Auto-generated)`}
+            readOnly
+            disabled
+            className="bg-muted cursor-not-allowed"
+            placeholder="Auto-generated on save"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Format: CTL-YYYY-XXXXXX (Auto-generated on creation)
+          </p>
         </div>
       </div>
 
@@ -779,20 +776,7 @@ function ControlForm({ control, onSubmit, onCancel }: {
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="framework">Primary Framework</Label>
-          <Select value={formData.framework} onValueChange={(value) => setFormData({ ...formData, framework: value })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ISO 27001">ISO 27001</SelectItem>
-              <SelectItem value="NIST CSF">NIST CSF</SelectItem>
-              <SelectItem value="COBIT">COBIT</SelectItem>
-              <SelectItem value="PCI DSS">PCI DSS</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      
         <div>
           <Label htmlFor="implementation_status">Status</Label>
           <Select value={formData.implementation_status} onValueChange={(value) => setFormData({ ...formData, implementation_status: value })}>
@@ -804,23 +788,6 @@ function ControlForm({ control, onSubmit, onCancel }: {
               <SelectItem value="partially_implemented">Partially Implemented</SelectItem>
               <SelectItem value="implemented">Implemented</SelectItem>
               <SelectItem value="not_applicable">Not Applicable</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="effectiveness_rating">Effectiveness Rating</Label>
-          <Select value={formData.effectiveness_rating} onValueChange={(value) => setFormData({ ...formData, effectiveness_rating: value })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="not_assessed">Not Assessed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -840,33 +807,51 @@ function ControlForm({ control, onSubmit, onCancel }: {
           </Select>
         </div>
       </div>
+ 
+
+      <div className="grid grid-cols-2 gap-4">
+      <div>
+          <Label htmlFor="compliance_requirements">Compliance Requirements (ISO, PCI, NIST, CIS ..)</Label>
+          <FrameworkSelectInput 
+            formData={formData} 
+            setFormData={setFormData} 
+            fieldName="compliance_requirements"
+            onFrameworkSelected={(framework) => {
+              // Optionally handle additional logic when framework is selected
+              console.log("Compliance Requirements ISO, NIST..:", framework);
+            }}
+          />
+        </div>
+      
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="owner">Owner</Label>
-          <Input
-            id="owner"
-            value={formData.owner}
-            onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-            required
+          <Label htmlFor="owner">Control Owner</Label>
+          <DepartmentSelectInput 
+            formData={formData} 
+            setFormData={setFormData} 
+            fieldName="owner"
+            onDepartmentSelected={(department) => {
+              // Optionally handle additional logic when department is selected
+              console.log("Selected control owner department:", department);
+            }}
           />
         </div>
         <div>
-          <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={formData.department}
-            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            required
+          <Label htmlFor="department">Custodian</Label>
+          <OwnerSelectInput 
+            formData={formData} 
+            setFormData={setFormData} 
+            fieldName="department" 
           />
         </div>
         <div>
-          <Label htmlFor="responsible_party">Responsible Party</Label>
-          <Input
-            id="responsible_party"
-            value={formData.responsible_party}
-            onChange={(e) => setFormData({ ...formData, responsible_party: e.target.value })}
-            placeholder="Optional"
+          <Label htmlFor="responsible_party">Assessed By</Label>
+          <OwnerSelectInput 
+            formData={formData} 
+            setFormData={setFormData} 
+            fieldName="responsible_party" 
           />
         </div>
       </div>
@@ -904,7 +889,7 @@ function ControlForm({ control, onSubmit, onCancel }: {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-      <div>
+        <div>
           <Label htmlFor="implementation_date">Implementation Date</Label>
           <Input
             id="implementation_date"
@@ -925,7 +910,7 @@ function ControlForm({ control, onSubmit, onCancel }: {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-      <div>
+        <div>
           <Label htmlFor="next_assessment_date">Next Assessment Date</Label>
           <Input
             id="next_assessment_date"
@@ -948,17 +933,7 @@ function ControlForm({ control, onSubmit, onCancel }: {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="maintenance_cost">Maintenance Cost</Label>
-          <Input
-            id="maintenance_cost"
-            type="number"
-            step="0.01"
-            value={formData.maintenance_cost}
-            onChange={(e) => setFormData({ ...formData, maintenance_cost: e.target.value })}
-            placeholder="0.00"
-          />
-        </div>
+       
         <div>
           <Label htmlFor="monitoring_frequency">Monitoring Frequency</Label>
           <Input

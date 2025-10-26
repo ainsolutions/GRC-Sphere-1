@@ -18,7 +18,7 @@ export const GET = withContext(async({ tenantDb }, request) => {
     const tableExists = await tenantDb`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
-        WHERE table_schema = 'org_mashreqbank' 
+        WHERE table_schema = 'org_dollarbank' 
         AND table_name = 'third_party_gap_analysis'
       )
     ` as Record<string, any>[]

@@ -32,6 +32,7 @@ import {
   Activity,
   Target,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MICARemediation {
   id: string
@@ -236,10 +237,11 @@ export function MICARemediationTracker() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Remediation Plan"/>
+            {/* <Button>
               <Plus className="mr-2 h-4 w-4" />
               New Remediation Plan
-            </Button>
+            </Button> */}
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

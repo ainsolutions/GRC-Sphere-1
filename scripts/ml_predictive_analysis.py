@@ -36,6 +36,7 @@ import xgboost as xgb
 from imblearn.over_sampling import SMOTE
 import joblib
 
+
 class GRCPredictiveAnalyzer:
     """
     Comprehensive predictive analysis system for GRC (Governance, Risk, Compliance) data

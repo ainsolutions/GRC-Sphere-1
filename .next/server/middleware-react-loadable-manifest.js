@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"components/landing/logo-3d.tsx -> three\":{\"id\":\"components/landing/logo-3d.tsx -> three\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_three_build_three_module_js.js\"]}}"

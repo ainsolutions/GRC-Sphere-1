@@ -37,6 +37,8 @@ import {
   Shield,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import DepartmentSelectInput from "@/components/department-search-input"
+import UnitSelectInput from "@/components/unit-search-input"
 import {
   Pagination,
   PaginationContent,
@@ -45,6 +47,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface IncidentRemediation {
   id: number
@@ -127,6 +130,8 @@ export function IncidentRemediationTracking() {
     assigned_to: "",
     assigned_email: "",
     responsible_department: "",
+    department_unit: "",
+    departmental_unit: "",
     responsible_manager: "",
     start_date: "",
     target_completion_date: "",
@@ -255,6 +260,8 @@ export function IncidentRemediationTracking() {
       assigned_to: "",
       assigned_email: "",
       responsible_department: "",
+      department_unit: "",
+      departmental_unit: "",
       responsible_manager: "",
       start_date: "",
       target_completion_date: "",
@@ -310,6 +317,8 @@ export function IncidentRemediationTracking() {
       assigned_to: remediation.assigned_to,
       assigned_email: remediation.assigned_email,
       responsible_department: remediation.responsible_department,
+      department_unit: "",
+      departmental_unit: "",
       responsible_manager: remediation.responsible_manager || "",
       start_date: remediation.start_date ? remediation.start_date.split("T")[0] : "",
       target_completion_date: remediation.target_completion_date
@@ -392,10 +401,11 @@ export function IncidentRemediationTracking() {
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Remediation" />
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Remediation
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -515,12 +525,21 @@ export function IncidentRemediationTracking() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="responsible_department">Department</Label>
-                      <Input
-                        id="responsible_department"
-                        value={formData.responsible_department}
-                        onChange={(e) => setFormData({ ...formData, responsible_department: e.target.value })}
+                      <Label htmlFor="responsible_department">Remediation Department</Label>
+                      <DepartmentSelectInput
+                        formData={formData}
+                        setFormData={setFormData}
+                        fieldName="responsible_department"
+                        onDepartmentSelected={(department) => {
+                          setFormData({
+                            ...formData,
+                            responsible_department: department.name
+                          });
+                        }}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Search and select department from the organization
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="responsible_manager">Manager</Label>
@@ -529,6 +548,26 @@ export function IncidentRemediationTracking() {
                         value={formData.responsible_manager}
                         onChange={(e) => setFormData({ ...formData, responsible_manager: e.target.value })}
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="departmental_unit">Remediation Departmental Unit</Label>
+                      <UnitSelectInput
+                        formData={formData}
+                        setFormData={setFormData}
+                        fieldName="departmental_unit"
+                        onUnitSelected={(unit) => {
+                          setFormData({
+                            ...formData,
+                            departmental_unit: unit.department_unit || unit.name
+                          });
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Search and select departmental unit or sub-department
+                      </p>
                     </div>
                   </div>
 
@@ -806,7 +845,14 @@ export function IncidentRemediationTracking() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Button variant="outline" size="sm" onClick={() => handleView(remediation)}>
+                            <ActionButtons isTableAction={true}
+                              onView={() => handleView(remediation)}
+                              onEdit={() => handleEdit(remediation)}
+                              onDelete={() => handleDelete(remediation.id)}
+                              deleteDialogTitle={remediation.incident_title}
+                                actionObj={remediation}
+                            />
+                            {/* <Button variant="outline" size="sm" onClick={() => handleView(remediation)}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button variant="outline" size="sm" onClick={() => handleEdit(remediation)}>
@@ -836,7 +882,7 @@ export function IncidentRemediationTracking() {
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
-                            </AlertDialog>
+                            </AlertDialog> */}
                           </div>
                         </TableCell>
                       </TableRow>

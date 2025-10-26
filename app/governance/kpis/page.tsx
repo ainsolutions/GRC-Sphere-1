@@ -32,6 +32,10 @@ import {
   RefreshCw,
   Loader2,
 } from "lucide-react"
+import OwnerSelectInput from "@/components/owner-search-input"
+import DepartmentSelectInput from "@/components/department-search-input"
+import UnitSelectInput from "@/components/unit-search-input"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 // Interface for governance KPI data from API
 interface GovernanceKPI {
@@ -72,6 +76,8 @@ export default function GovernanceKPIs() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingKpi, setEditingKpi] = useState<GovernanceKPI | null>(null)
   const { toast } = useToast()
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewingKpi, setViewingKpi] = useState<GovernanceKPI | null>(null);
 
   // Fetch KPIs from API
   const fetchKPIs = async () => {
@@ -115,7 +121,7 @@ export default function GovernanceKPIs() {
   useEffect(() => {
     let filtered = kpis.filter(kpi => {
       const matchesSearch = kpi.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           kpi.description.toLowerCase().includes(searchTerm.toLowerCase())
+        kpi.description.toLowerCase().includes(searchTerm.toLowerCase())
 
       return matchesSearch
     })
@@ -136,11 +142,11 @@ export default function GovernanceKPIs() {
 
       if (result.success) {
         await fetchKPIs() // Refresh the KPIs list
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "KPI Created",
-      description: "New KPI has been successfully created.",
-    })
+        setIsCreateDialogOpen(false)
+        toast({
+          title: "KPI Created",
+          description: "New KPI has been successfully created.",
+        })
       } else {
         toast({
           title: "Error",
@@ -174,12 +180,12 @@ export default function GovernanceKPIs() {
 
       if (result.success) {
         await fetchKPIs() // Refresh the KPIs list
-    setIsEditDialogOpen(false)
-    setEditingKpi(null)
-    toast({
-      title: "KPI Updated",
-      description: "KPI has been successfully updated.",
-    })
+        setIsEditDialogOpen(false)
+        setEditingKpi(null)
+        toast({
+          title: "KPI Updated",
+          description: "KPI has been successfully updated.",
+        })
       } else {
         toast({
           title: "Error",
@@ -207,10 +213,10 @@ export default function GovernanceKPIs() {
 
       if (result.success) {
         await fetchKPIs() // Refresh the KPIs list
-    toast({
-      title: "KPI Deleted",
-      description: "KPI has been successfully deleted.",
-    })
+        toast({
+          title: "KPI Deleted",
+          description: "KPI has been successfully deleted.",
+        })
       } else {
         toast({
           title: "Error",
@@ -262,10 +268,8 @@ export default function GovernanceKPIs() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="default">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add KPI
-                </Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add KPI" />
+
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -355,21 +359,21 @@ export default function GovernanceKPIs() {
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               Key Performance Indicators ({filteredKpis.length})
-                    </CardTitle>
+            </CardTitle>
             <CardDescription>
               Monitor and track governance performance metrics
-                    </CardDescription>
-              </CardHeader>
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Loading KPIs...</span>
-                  </div>
+              </div>
             ) : filteredKpis.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No KPIs found. Try adjusting your filters or create a new KPI.
-                  </div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -396,18 +400,18 @@ export default function GovernanceKPIs() {
                       const currentValue = parseFloat(kpi.current_value)
                       const targetValue = parseFloat(kpi.target_value)
                       const progressPercentage = targetValue > 0 ? Math.round((currentValue / targetValue) * 100) : 0
-                      
+
                       return (
                         <TableRow key={kpi.id}>
                           <TableCell>
                             <div className="max-w-xs">
                               <div className="font-semibold" title={kpi.name}>
                                 {kpi.name}
-                  </div>
+                              </div>
                               <div className="text-sm text-gray-500 truncate" title={kpi.description}>
                                 {kpi.description}
-                </div>
-                  </div>
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{kpi.category}</Badge>
@@ -416,22 +420,22 @@ export default function GovernanceKPIs() {
                             <div className="text-center">
                               <div className="font-bold text-lg">
                                 {kpi.current_value}
-                  </div>
-                </div>
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="text-center">
                               <div className="font-semibold">
                                 {kpi.target_value}
-                    </div>
-                  </div>
+                              </div>
+                            </div>
                           </TableCell>
                           <TableCell className="text-sm">{kpi.unit}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {getTrendIcon(kpi.trend)}
                               <span className="text-sm capitalize">{kpi.trend}</span>
-                </div>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge className={getStatusColor(kpi.status)}>
@@ -450,27 +454,20 @@ export default function GovernanceKPIs() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                  <Button
-                                variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingKpi(kpi)
-                      setIsEditDialogOpen(true)
-                    }}
-                  >
-                                <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                                variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteKpi(kpi.id)}
-                  >
-                                <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                              <ActionButtons isTableAction={true}
+                                onView={() => {
+                                  setViewingKpi(kpi);
+                                  setIsViewDialogOpen(true);
+                                }}
+                                onEdit={() => {
+                                  setEditingKpi(kpi)
+                                  setIsEditDialogOpen(true)
+                                }}
+                                onDelete={() => handleDeleteKpi(kpi.id)}
+                                actionObj={kpi}
+                                deleteDialogTitle={kpi.name}
+                              />
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
@@ -479,8 +476,8 @@ export default function GovernanceKPIs() {
                 </Table>
               </div>
             )}
-              </CardContent>
-            </Card>
+          </CardContent>
+        </Card>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -491,8 +488,8 @@ export default function GovernanceKPIs() {
                 Update the key performance indicator details.
               </DialogDescription>
             </DialogHeader>
-            <KPIForm 
-              kpi={editingKpi || undefined} 
+            <KPIForm
+              kpi={editingKpi || undefined}
               onSubmit={handleEditKpi}
               onCancel={() => {
                 setIsEditDialogOpen(false)
@@ -501,13 +498,45 @@ export default function GovernanceKPIs() {
             />
           </DialogContent>
         </Dialog>
+
+        {/* View Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{viewingKpi?.name || "KPI Details"}</DialogTitle>
+              <DialogDescription>
+                Viewing details for the selected Key Performance Indicator.
+              </DialogDescription>
+            </DialogHeader>
+            {viewingKpi && (
+              <div className="space-y-4 py-4 text-sm">
+                <p><strong>Description:</strong> {viewingKpi.description}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><strong>Category:</strong> <Badge variant="outline">{viewingKpi.category}</Badge></div>
+                  <div><strong>Framework:</strong> <Badge variant="secondary">{viewingKpi.framework}</Badge></div>
+                  <div><strong>Status:</strong> {viewingKpi.status}</div>
+                  <div><strong>Trend:</strong> {viewingKpi.trend}</div>
+                  <div><strong>Current Value:</strong> {viewingKpi.current_value} {viewingKpi.unit}</div>
+                  <div><strong>Target Value:</strong> {viewingKpi.target_value} {viewingKpi.unit}</div>
+                  <div><strong>Owner:</strong> {viewingKpi.owner}</div>
+                  <div><strong>Next Review:</strong> {viewingKpi.next_review_date ? new Date(viewingKpi.next_review_date).toLocaleDateString() : 'N/A'}</div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
 }
 
 // KPI Form Component
-function KPIForm({ kpi, onSubmit, onCancel }: { 
+function KPIForm({ kpi, onSubmit, onCancel }: {
   kpi?: GovernanceKPI
   onSubmit: (data: any) => void
   onCancel?: () => void
@@ -523,6 +552,7 @@ function KPIForm({ kpi, onSubmit, onCancel }: {
     measurement_frequency: kpi?.measurement_frequency || "monthly",
     owner: kpi?.owner || "",
     department: kpi?.department || "",
+    departmental_unit: kpi?.departmental_unit || "",
     calculation_method: kpi?.calculation_method || "",
     data_source: kpi?.data_source || "",
     status: kpi?.status || "active",
@@ -643,21 +673,45 @@ function KPIForm({ kpi, onSubmit, onCancel }: {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="owner">Owner</Label>
-          <Input
-            id="owner"
-            value={formData.owner}
-            onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
-            required
+          <OwnerSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="owner"
           />
         </div>
         <div>
           <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={formData.department}
-            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-            required
+          <DepartmentSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="department"
+            onDepartmentSelected={(department) => {
+              setFormData({
+                ...formData,
+                department: department.name
+              })
+            }}
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="departmental_unit">Departmental Unit</Label>
+          <UnitSelectInput
+            formData={formData}
+            setFormData={setFormData}
+            fieldName="departmental_unit"
+            onUnitSelected={(unit) => {
+              setFormData({
+                ...formData,
+                departmental_unit: unit.department_unit || unit.name
+              })
+            }}
+          />
+          <p className="text-xs text-muted-foreground">
+            Search and select specific unit within department
+          </p>
         </div>
       </div>
 
@@ -701,14 +755,14 @@ function KPIForm({ kpi, onSubmit, onCancel }: {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-      <div>
+        <div>
           <Label htmlFor="data_source">Data Source</Label>
-        <Input
+          <Input
             id="data_source"
             value={formData.data_source}
             onChange={(e) => setFormData({ ...formData, data_source: e.target.value })}
-          required
-        />
+            required
+          />
         </div>
         <div>
           <Label htmlFor="next_review_date">Next Review Date</Label>

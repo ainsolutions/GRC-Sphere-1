@@ -5,6 +5,6 @@ import { withContext } from "@/lib/HttpContext";
 export const POST= withContext(async ({}, request: Request) => {
     
     //await destroySession(); //add for fixation
-    return NextResponse.redirect(new URL("/login", request.url));
-    // return NextResponse.json({ success: true });
+    // return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.json({ success: true });
 })

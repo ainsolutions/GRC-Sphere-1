@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator"
 import { Search, Plus, Edit, Trash2, CheckCircle, Save, X } from "lucide-react"
 import { toast } from "sonner"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NESAControl {
   id: string
@@ -286,9 +287,9 @@ export function NESAUAEGapAnalysis() {
     averageMaturity:
       gapEntries.length > 0
         ? gapEntries.reduce((acc, entry) => {
-            const maturityIndex = maturityLevels.indexOf(entry.initial_control_maturity)
-            return acc + maturityIndex
-          }, 0) / gapEntries.length
+          const maturityIndex = maturityLevels.indexOf(entry.initial_control_maturity)
+          return acc + maturityIndex
+        }, 0) / gapEntries.length
         : 0,
   }
 
@@ -317,12 +318,13 @@ export function NESAUAEGapAnalysis() {
           </h2>
           <p className="text-muted-foreground">Analyze gaps between existing controls and NESA UAE requirements</p>
         </div>
-        <Button
+        <ActionButtons isTableAction={false} onAdd={() => { openNewEntryDialog() }} btnAddText="New Gap Analysis" />
+        {/* <Button
           onClick={() => openNewEntryDialog()}
         >
           <Plus className="mr-2 h-4 w-4" />
           New Gap Analysis
-        </Button>
+        </Button> */}
       </div>
 
       {/* Statistics Cards */}
@@ -591,7 +593,14 @@ export function NESAUAEGapAnalysis() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm" onClick={() => handleEdit(entry)}>
+                            <ActionButtons isTableAction={true}
+                              //onView={() => {}} 
+                              onEdit={() => handleEdit(entry)}
+                              onDelete={() => handleDelete(entry.id)}
+                                actionObj={entry}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button variant="outline" size="sm" onClick={() => handleEdit(entry)}>
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
@@ -601,7 +610,7 @@ export function NESAUAEGapAnalysis() {
                               className="text-red-600 hover:text-red-700"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -738,7 +747,7 @@ export function NESAUAEGapAnalysis() {
               {/* Control Owner */}
               <div>
                 <Label htmlFor="control_owner">Control Owner</Label>
-                <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName="control_owner"/>                            
+                <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName="control_owner" />
 
                 {/* <Input
                   id="control_owner"
@@ -828,7 +837,7 @@ export function NESAUAEGapAnalysis() {
               {/* Action Owner */}
               <div>
                 <Label htmlFor="action_owner">Action Owner</Label>
-                <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName="action_owner" />                                            
+                <OwnerSelectInput formData={formData} setFormData={setFormData} fieldName="action_owner" />
                 {/* <Input
                   id="action_owner"
                   value={formData.action_owner}
@@ -840,11 +849,10 @@ export function NESAUAEGapAnalysis() {
               {/* Reviewer */}
               <div>
                 <Label htmlFor="reviewer">Reviewer</Label>
-                <Input
-                  id="reviewer"
-                  value={formData.reviewer}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, reviewer: e.target.value }))}
-                  placeholder="e.g., CISO"
+                <OwnerSelectInput 
+                  formData={formData} 
+                  setFormData={setFormData} 
+                  fieldName="reviewer" 
                 />
               </div>
 
@@ -896,7 +904,7 @@ export function NESAUAEGapAnalysis() {
               </Button>
               <Button
                 type="submit"
-                
+
               >
                 <Save className="mr-2 h-4 w-4" />
                 {editingEntry ? "Update" : "Create"} Gap Analysis

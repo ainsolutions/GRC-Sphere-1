@@ -39,6 +39,7 @@ export const PUT = withContext( async ({ tenantDb },request, { params }: { param
         high_risk_findings = ${body.high_risk_findings || 0},
         medium_risk_findings = ${body.medium_risk_findings || 0},
         low_risk_findings = ${body.low_risk_findings || 0},
+        assets = ${JSON.stringify(body.assets || [])},
         updated_at = NOW()
       WHERE id = ${params.id}
       RETURNING *

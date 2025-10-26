@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +25,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface RemediationItem {
   id: number
@@ -229,10 +231,11 @@ export function RemediationTracking() {
           <h2 className="text-2xl font-bold text-gray-900">Third-Party Risk Remediation Tracking</h2>
           <p className="text-gray-600">Track and manage remediation activities for third-party risk gaps</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <ActionButtons isTableAction={false} onAdd={() => { setIsCreateDialogOpen(true) }} btnAddText="Add Remediation" />
+        {/* <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Remediation
-        </Button>
+        </Button> */}
       </div>
 
       {/* Statistics Cards */}
@@ -455,7 +458,17 @@ export function RemediationTracking() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Button
+                          <ActionButtons isTableAction={true}
+                            onView={() => {
+                              setSelectedItem(item)
+                              setIsViewDialogOpen(true)
+                            }}
+                            onEdit={() => { }}
+                            onDelete={() => { }}
+                                actionObj={item}
+                          //deleteDialogTitle={}                                
+                          />
+                          {/* <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
@@ -470,7 +483,7 @@ export function RemediationTracking() {
                           </Button>
                             <Button variant="outline" size="sm">
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>

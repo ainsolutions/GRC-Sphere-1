@@ -18,6 +18,8 @@ export const GET = withContext(async({ tenantDb }, request) => {
       ORDER BY function_code
     `
 
+    console.log("Query Result:", functions);
+
     return NextResponse.json({
       success: true,
       data: functions,

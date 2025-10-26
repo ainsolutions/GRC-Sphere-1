@@ -442,7 +442,7 @@ export default function RiskControlRepositoryPage() {
                   </div>
                   <Dialog open={isCreateControlDialogOpen} onOpenChange={setIsCreateControlDialogOpen}>
                     <DialogTrigger asChild>
-                      <ActionButtons isTableAction={false} onAdd={() => { }} btnText="Add Control" />
+                      <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Control" />
                       {/* <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Control
@@ -685,6 +685,7 @@ export default function RiskControlRepositoryPage() {
                               <ActionButtons isTableAction={true}
                                 onView={() => {}}
                                 onEdit={() => {}}
+                                actionObj={control}
                                 //onDelete={() => handleDeleteAsset(asset)}
                                 //deleteDialogTitle={control.control_name}
                               />
@@ -887,6 +888,7 @@ export default function RiskControlRepositoryPage() {
                               <ActionButtons isTableAction={true}
                                 onView={() => {}}
                                 onEdit={() => {}}
+                                actionObj={control}
                                 //onDelete={() => handleDeleteAsset(asset)}
                                 //deleteDialogTitle={control.control_name}
                               />

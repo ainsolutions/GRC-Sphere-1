@@ -27,6 +27,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface QatarNIARemediation {
   id: number
@@ -282,10 +283,11 @@ export function QatarNIARemediationTracker({ assessmentId }: QatarNIARemediation
           </Button>
           <Dialog open={isNewRemediationOpen} onOpenChange={setIsNewRemediationOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="Add Remediation"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Remediation
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -637,7 +639,17 @@ export function QatarNIARemediationTracker({ assessmentId }: QatarNIARemediation
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true} 
+                                  onView={() => {
+                                    setSelectedRemediation(remediation)
+                                setIsDetailOpen(true)
+                                  }} 
+                                  onEdit={() => {}} 
+                                  onDelete={() => {}}  
+                                actionObj={remediation} 
+                                  //deleteDialogTitle={}                                
+                                  />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               className="hover:bg-teal-100"
@@ -653,7 +665,7 @@ export function QatarNIARemediationTracker({ assessmentId }: QatarNIARemediation
                             </Button>
                             <Button variant="outline" size="sm" className="hover:bg-red-100">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

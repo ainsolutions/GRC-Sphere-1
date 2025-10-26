@@ -33,6 +33,7 @@ import {
   Calendar,
   DollarSign,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface MASGapAnalysis {
   id: string
@@ -345,10 +346,11 @@ export function MASGapAnalysis() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="Add Gap Analysis" />
+                {/* <Button>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Gap Analysis
-                </Button>
+                </Button> */}
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
                 <DialogHeader>
@@ -521,7 +523,7 @@ export function MASGapAnalysis() {
                   </Button>
                   <Button
                     onClick={handleCreateGap}
-                   
+
                   >
                     Create Gap Analysis
                   </Button>
@@ -625,7 +627,17 @@ export function MASGapAnalysis() {
                         <TableCell>{getStatusBadge(gap.status)}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button
+                            <ActionButtons isTableAction={true}
+                              onView={() => {
+                                setSelectedGap(gap)
+                                setIsViewDialogOpen(true)
+                              }}
+                              onEdit={() => { }}
+                              onDelete={() => { }}
+                                actionObj={gap}
+                            //deleteDialogTitle={}                                
+                            />
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               onClick={() => {
@@ -640,7 +652,7 @@ export function MASGapAnalysis() {
                             </Button>
                             <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

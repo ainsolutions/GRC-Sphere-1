@@ -36,6 +36,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { QatarNIARemediationTracker } from "./qatar-nia-remediation-tracker"
 import { QatarNIASelfAssessment } from "./qatar-nia-self-assessment"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface QatarNIAAssessment {
   id: number
@@ -337,10 +338,11 @@ export function QatarNIAComplianceAssessment() {
           </Button>
           <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={()=>{}} btnAddText="New Qatar NIA Assessment"/>
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New Qatar NIA Assessment
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -651,7 +653,17 @@ export function QatarNIAComplianceAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <ActionButtons isTableAction={true} 
+                                  onView={() => {
+                                    setSelectedAssessment(assessment)
+                                    setIsAssessmentDetailOpen(true)
+                                  }} 
+                                  onEdit={() => {}} 
+                                  onDelete={() => {}}   
+                                actionObj={assessment}
+                                  //deleteDialogTitle={}                                
+                                  />
+                                {/* <Button
                                   variant="outline"
                                   size="sm"
                                   className="hover:bg-teal-100"
@@ -667,7 +679,7 @@ export function QatarNIAComplianceAssessment() {
                                 </Button>
                                 <Button variant="outline" size="sm" className="hover:bg-red-100">
                                   <Trash2 className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                               </div>
                             </TableCell>
                           </TableRow>

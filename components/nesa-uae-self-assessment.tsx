@@ -38,6 +38,7 @@ import {
   Download,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface NESARequirement {
   id: number
@@ -487,17 +488,17 @@ export function NESAUAESelfAssessment() {
 
   const filteredControls = Array.isArray(assessmentControls)
     ? assessmentControls.filter((control) => {
-        const matchesSearch =
-          control.control_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          control.control_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          control.domain?.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch =
+        control.control_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        control.control_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        control.domain?.toLowerCase().includes(searchTerm.toLowerCase())
 
-        const matchesDomain = !domainFilter || control.domain === domainFilter
-        const matchesMaturity = !maturityFilter || control.current_maturity_level === maturityFilter
-        const matchesStatus = !statusFilter || control.implementation_status === statusFilter
+      const matchesDomain = !domainFilter || control.domain === domainFilter
+      const matchesMaturity = !maturityFilter || control.current_maturity_level === maturityFilter
+      const matchesStatus = !statusFilter || control.implementation_status === statusFilter
 
-        return matchesSearch && matchesDomain && matchesMaturity && matchesStatus
-      })
+      return matchesSearch && matchesDomain && matchesMaturity && matchesStatus
+    })
     : []
 
   const uniqueDomains = Array.from(new Set(assessmentControls.map((c) => c.domain).filter(Boolean)))
@@ -529,10 +530,11 @@ export function NESAUAESelfAssessment() {
           </Button>
           <Dialog open={isNewAssessmentOpen} onOpenChange={setIsNewAssessmentOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="new Self Assessment" />
+              {/* <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New Self Assessment
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -624,7 +626,7 @@ export function NESAUAESelfAssessment() {
                   <Button
                     onClick={createSelfAssessment}
                     disabled={!newAssessment.assessment_name}
-                    
+
                   >
                     Create Assessment
                   </Button>
@@ -747,9 +749,8 @@ export function NESAUAESelfAssessment() {
                         selfAssessments.map((assessment) => (
                           <TableRow
                             key={assessment.id}
-                            className={`hover:bg-gradient-to-r hover:from-red-50/30 hover:via-green-50/30 hover:to-gray-50/30 cursor-pointer ${
-                              selectedAssessment?.id === assessment.id ? "bg-blue-50/50" : ""
-                            }`}
+                            className={`hover:bg-gradient-to-r hover:from-red-50/30 hover:via-green-50/30 hover:to-gray-50/30 cursor-pointer ${selectedAssessment?.id === assessment.id ? "bg-blue-50/50" : ""
+                              }`}
                             onClick={() => setSelectedAssessment(assessment)}
                           >
                             <TableCell className="font-medium">{assessment.assessment_name}</TableCell>
@@ -775,16 +776,25 @@ export function NESAUAESelfAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button variant="outline" size="sm" className="hover:bg-red-100">
+                                <div className="flex space-x-2">
+                                  <ActionButtons isTableAction={true}
+                                    onView={() => { }}
+                                    onEdit={() => { }}
+                                actionObj={assessment}
+                                  //onDelete={() =>{} }   
+                                  //deleteDialogTitle={}                                
+                                  />
+                                  {/* <Button variant="outline" size="sm" className="hover:bg-red-100">
                                   <Eye className="h-4 w-4" />
                                 </Button>
                                 <Button variant="outline" size="sm" className="hover:bg-green-100">
                                   <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" className="hover:bg-blue-100">
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </div>
+                                </Button> */}
+                                  <Button variant="outline" size="sm" className="hover:bg-blue-100">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                </div>
                             </TableCell>
                           </TableRow>
                         ))
@@ -924,7 +934,37 @@ export function NESAUAESelfAssessment() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
-                                <Button
+                                <div className="flex space-x-2">
+                                  <ActionButtons isTableAction={true}
+                                    //onView={() => {}} 
+                                    onEdit={() => {
+                                      setSelectedControl(control)
+                                      setControlUpdate({
+                                        current_maturity_level: control.current_maturity_level || "",
+                                        target_maturity_level: control.target_maturity_level || "",
+                                        implementation_status: control.implementation_status || "",
+                                        existing_controls: control.existing_controls || "",
+                                        target_controls: control.target_controls || "",
+                                        action_owner: control.action_owner || "",
+                                        action_owner_email: control.action_owner_email || "",
+                                        target_completion_date: control.target_completion_date || "",
+                                        evidence_provided: control.evidence_provided || "",
+                                        gaps_identified: control.gaps_identified || "",
+                                        remediation_actions: control.remediation_actions || "",
+                                        business_justification: control.business_justification || "",
+                                        estimated_cost: safeNumber(control.estimated_cost).toString(),
+                                        estimated_effort_hours: safeNumber(control.estimated_effort_hours).toString(),
+                                        priority: control.priority || "",
+                                        compliance_percentage: safeNumber(control.compliance_percentage).toString(),
+                                      })
+                                      setIsControlDetailOpen(true)
+                                    }}
+                                actionObj={control}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={}                                
+                                  />
+                                  </div>
+                                  {/* <Button
                                   variant="ghost"
                                   size="sm"
                                   className="hover:bg-red-100"
@@ -952,8 +992,8 @@ export function NESAUAESelfAssessment() {
                                   }}
                                 >
                                   <Edit className="h-4 w-4" />
-                                </Button>
-                              </div>
+                                </Button> */}
+                                </div>
                             </TableCell>
                           </TableRow>
                         ))

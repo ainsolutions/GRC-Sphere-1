@@ -79,16 +79,6 @@ export const POST = withContext(async({ tenantDb}: HttpSessionContext, request) 
       )
     }
 
-    // Generate finding ID
-    const currentYear = new Date().getFullYear()
-    const findingIdResult = await tenantDb`
-      SELECT COALESCE(MAX(CAST(SUBSTRING(finding_id FROM 10) AS INTEGER)), 0) + 1 as next_id
-      FROM assessment_findings 
-      WHERE finding_id LIKE ${`FIND-${currentYear}-%`}
-    ` as Record<string, number>[]
-    const nextId = findingIdResult[0]?.next_id || 1
-    const findingId = `FIND-${currentYear}-${nextId.toString().padStart(6, "0")}`
-
     // Check if assessment exists
     const assessment = await tenantDb`
       SELECT id, assessment_name, organization_id, department_id
@@ -99,6 +89,34 @@ export const POST = withContext(async({ tenantDb}: HttpSessionContext, request) 
     if (assessment.length === 0) {
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 })
     }
+
+    // Generate finding ID with assessment name
+    const currentYear = new Date().getFullYear()
+    const assessmentName = assessment[0].assessment_name || "UNKNOWN"
+    const truncatedName = assessmentName
+      .substring(0, 20)
+      .trim()
+      .replace(/\s+/g, "-")
+      .toUpperCase()
+    
+    const findingIdPattern = `FIND-${currentYear}-${truncatedName}-%`
+    const findingIdResult = await tenantDb`
+      SELECT finding_id
+      FROM assessment_findings 
+      WHERE finding_id LIKE ${findingIdPattern}
+      ORDER BY finding_id DESC
+      LIMIT 1
+    ` as Record<string, any>[]
+    
+    let nextId = 1
+    if (findingIdResult.length > 0) {
+      const lastId = findingIdResult[0].finding_id
+      const parts = lastId.split("-")
+      const numberPart = parts[parts.length - 1]
+      nextId = (Number.parseInt(numberPart) || 0) + 1
+    }
+    
+    const findingId = `FIND-${currentYear}-${truncatedName}-${nextId.toString().padStart(6, "0")}`
 
     let organizationId = assessment[0].organization_id
     let departmentId = assessment[0].department_id

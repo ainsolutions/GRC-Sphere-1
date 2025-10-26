@@ -36,12 +36,12 @@ export const POST = withContext(async ({ tenantDb }, request) => {
 
     const [newAsset] = await tenantDb`
       INSERT INTO assets (
-        asset_id, asset_name, asset_type, classification, owner, business_value,
+        asset_id, asset_name, asset_type, department, classification, owner, business_value,
         custodian, retention_period, disposal_method, ip_address, model_version,
         confidentiality_level, integrity_level, availability_level, description, location,
         created_by, status
       ) VALUES (
-        ${body.asset_id}, ${body.asset_name}, ${body.asset_type}, ${body.classification},
+        ${body.asset_id}, ${body.asset_name}, ${body.asset_type}, ${body.department}, ${body.classification},
         ${body.owner}, ${body.business_value},
         ${body.custodian || null}, ${body.retention_period || null}, ${body.disposal_method || null},
         ${body.ip_address || null}, ${body.model_version || null},

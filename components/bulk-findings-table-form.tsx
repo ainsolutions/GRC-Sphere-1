@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Save, X } from "lucide-react"
 import { getAssessments } from "@/lib/actions/findings-actions"
 import { useToast } from "@/components/ui/use-toast"
+import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface BulkFinding {
   id: string
@@ -69,22 +71,24 @@ export function BulkFindingsTableForm({ onSuccess, onCancel }: BulkFindingsTable
 
   const generateFindingReference = (assessmentId: string, index: number) => {
     const assessment = assessments.find((a) => a.id.toString() === assessmentId)
+    const currentYear = new Date().getFullYear()
+    
     if (assessment) {
-      const assessmentCode = assessment.assessment_id || `ASSESS-${assessmentId}`
-      return `FIND-${assessmentCode}-${String(index + 1).padStart(6, "0")}`
+      // Truncate assessment name to 20 characters and replace spaces with dashes
+      const truncatedName = (assessment.assessment_name || "UNKNOWN")
+        .substring(0, 20)
+        .trim()
+        .replace(/\s+/g, "-")
+        .toUpperCase()
+      
+      return `FIND-${currentYear}-${truncatedName}-${String(index + 1).padStart(6, "0")}`
     }
-    return `FIND-ASSESS-${String(index + 1).padStart(6, "0")}`
+    return `FIND-${currentYear}-UNKNOWN-${String(index + 1).padStart(6, "0")}`
   }
 
   const updateFinding = (index: number, field: keyof BulkFinding, value: any) => {
     const updatedFindings = [...findings]
     updatedFindings[index] = { ...updatedFindings[index], [field]: value }
-
-    // Auto-generate finding reference when assessment is selected
-    if (selectedAssessment && field !== "findingReference") {
-      updatedFindings[index].findingReference = generateFindingReference(selectedAssessment, index)
-    }
-
     setFindings(updatedFindings)
   }
 
@@ -245,13 +249,7 @@ export function BulkFindingsTableForm({ onSuccess, onCancel }: BulkFindingsTable
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Bulk Findings Entry</CardTitle>
-            <Button 
-              onClick={addRow} 
-              size="sm" 
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Row
-            </Button>
+            <ActionButtons isTableAction={false} onAdd={addRow} btnAddText="Add Row"/>
           </div>
         </CardHeader>
         <CardContent>
@@ -281,9 +279,10 @@ export function BulkFindingsTableForm({ onSuccess, onCancel }: BulkFindingsTable
                     <TableCell>
                       <Input
                         value={finding.findingReference}
-                        onChange={(e) => updateFinding(index, "findingReference", e.target.value)}
-                        placeholder="FIND-XXX-001"
-                        className="text-sm"
+                        readOnly
+                        disabled
+                        placeholder="Auto-generated"
+                        className="text-sm bg-muted"
                       />
                     </TableCell>
 
@@ -378,17 +377,25 @@ export function BulkFindingsTableForm({ onSuccess, onCancel }: BulkFindingsTable
 
                     {/* Action Owner */}
                     <TableCell>
-                      <Input
-                        value={finding.actionOwner}
-                        onChange={(e) => updateFinding(index, "actionOwner", e.target.value)}
-                        placeholder="Assignee name"
-                        className="text-sm"
+                      <OwnerSelectInput
+                        formData={finding}
+                        setFormData={(updatedFinding) => {
+                          const updatedFindings = [...findings]
+                          updatedFindings[index] = updatedFinding
+                          setFindings(updatedFindings)
+                        }}
+                        fieldName="actionOwner"
                       />
                     </TableCell>
 
                     {/* Actions */}
                     <TableCell>
-                      <Button
+                      <ActionButtons isTableAction={true}
+                        onDelete={() => removeRow(index)}
+                        deleteDialogTitle={finding.findings}
+                                actionObj={finding}
+                      />                      
+                      {/* <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeRow(index)}
@@ -396,7 +403,7 @@ export function BulkFindingsTableForm({ onSuccess, onCancel }: BulkFindingsTable
                         className="text-red-400 hover:bg-red-900/20 hover:text-red-300 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                     </TableCell>
                   </TableRow>
                 ))}

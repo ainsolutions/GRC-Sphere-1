@@ -36,12 +36,22 @@ export const GET = withContext(
 // ─── POST  /api/gaps-analysis ───────────────────────────────────────────────
 // Create a new gap-analysis record
 export const POST = withContext(
-  async ({ tenantDb }: HttpSessionContext, request: Request) => {
+  async ({ tenantDb }: HttpSessionContext, request) => {
     try {
       const body = await request.json();
+      console.log("🧾 GAP PAYLOAD:", body);
 
-      // Basic validation
-      const required = ["assessment_id", "control_id", "gap_description"];
+      // ✅ Required fields validation
+      const required = [
+        "assessment_id",
+        "control_id",
+        "gap_description",
+        "severity",
+        "priority",
+        "estimated_effort",
+        "recommended_actions",
+      ] as const;
+
       for (const field of required) {
         if (!body[field]) {
           return NextResponse.json(
@@ -51,25 +61,72 @@ export const POST = withContext(
         }
       }
 
-      const created = await createGapAnalysis(tenantDb, {
-        assessment_id: body.assessment_id,
-        control_id: body.control_id,
-        gap_description: body.gap_description,
-        severity: body.severity ?? "medium",
-        priority: body.priority ?? "medium",
-        estimated_effort: body.estimated_effort ?? "",
-        recommended_actions: body.recommended_actions ?? "",
-      });
+      // ✅ Check if assessment exists (prevents FK violation)
+      const [assessmentExists] = await tenantDb`
+        SELECT id FROM cybersecurity_assessments WHERE id = ${body.assessment_id}
+      `;
+      if (!assessmentExists) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Assessment ID ${body.assessment_id} does not exist in this tenant's cybersecurity_assessments table.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // ✅ Optional: check if control exists as well (safety)
+      const [controlExists] = await tenantDb`
+        SELECT id FROM cri_controls WHERE id = ${body.control_id}
+      `;
+      if (!controlExists) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Control ID ${body.control_id} does not exist in this tenant's cri_controls table.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // ✅ Run SQL insert query
+      const result = await tenantDb`
+        INSERT INTO gaps_analysis (
+          assessment_id,
+          control_id,
+          gap_description,
+          severity,
+          priority,
+          estimated_effort,
+          recommended_actions
+        ) VALUES (
+          ${body.assessment_id},
+          ${body.control_id},
+          ${body.gap_description},
+          ${body.severity},
+          ${body.priority},
+          ${body.estimated_effort},
+          ${body.recommended_actions}
+        )
+        RETURNING *;
+      `;
+
+      if (!result || result.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "Insert failed, no rows returned" },
+          { status: 500 }
+        );
+      }
 
       return NextResponse.json({
         success: true,
-        data: created,
         message: "Gap analysis created successfully",
+        data: result[0],
       });
-    } catch (err) {
-      console.error("Error creating gap analysis:", err);
+    } catch (error: any) {
+      console.error("Error creating gap analysis:", error);
       return NextResponse.json(
-        { success: false, error: (err as Error).message },
+        { success: false, error: error.message },
         { status: 500 }
       );
     }

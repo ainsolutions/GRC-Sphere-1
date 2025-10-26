@@ -1042,7 +1042,14 @@ export function TechnologyRiskForm({
                     </div>
                     <div>
                       <Label>Due Date</Label>
-                      <Popover>
+                      <Input
+                        id="due_date"
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                      />
+
+                      {/* <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -1062,14 +1069,21 @@ export function TechnologyRiskForm({
                             initialFocus
                           />
                         </PopoverContent>
-                      </Popover>
+                      </Popover> */}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
 
                   <div>
                     <Label>Treatment End Date</Label>
-                    <Popover>
+                    <Input
+                      id="treatment_end_date"
+                      type="date"
+                      value={treatmentEndDate}
+                      onChange={(e) => setTreatmentEndDate(e.target.value)}
+                    />
+
+                    {/* <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -1091,7 +1105,7 @@ export function TechnologyRiskForm({
                           initialFocus
                         />
                       </PopoverContent>
-                    </Popover>
+                    </Popover> */}
                   </div>
                   <div></div>
                   </div>

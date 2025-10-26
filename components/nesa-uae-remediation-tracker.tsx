@@ -23,6 +23,7 @@ import { AlertTriangle, Edit, Eye, FileText, Plus, Search, Shield, TrendingUp } 
 import { useToast } from "@/hooks/use-toast"
 import { NESAUAEAnalyticsDashboard } from "./nesa-uae-analytics-dashboard"
 import OwnerSelectInput from "@/components/owner-search-input"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface RemediationAction {
   id: number
@@ -570,10 +571,11 @@ export function NESAUAERemediationTracker() {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => openDialog("create")}>
+              <ActionButtons isTableAction={false} onAdd={() => openDialog("create")} btnAddText="New Action"/>
+              {/* <Button onClick={() => openDialog("create")}>
                 <Plus className="h-4 w-4 mr-2" />
                 New Action
-              </Button>
+              </Button> */}
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
@@ -999,12 +1001,19 @@ export function NESAUAERemediationTracker() {
                           <Progress value={getProgressValue(action)} className="w-full" />
                         </TableCell>
                         <TableCell className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openDialog("view", action)}>
+                          <ActionButtons isTableAction={true} 
+                                  onView={() => openDialog("view", action)} 
+                                  onEdit={() => openDialog("edit", action)} 
+                                actionObj={action}
+                                  //onDelete={() => {}}   
+                                  //deleteDialogTitle={}                                
+                                  />
+                          {/* <Button variant="outline" size="sm" onClick={() => openDialog("view", action)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => openDialog("edit", action)}>
                             <Edit className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -119,9 +119,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
           </div>
           <div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-600 bg-clip-text text-transparent">
-              NIST CSF Cyber Intelligence Hub
+              NIST CSF Cyber Hub
             </h2>
-            <p className="text-slate-300">Advanced risk analytics and mitigation orchestration</p>
+            <p>Advanced risk analytics and mitigation orchestration</p>
           </div>
         </div>
         <Button onClick={onRefresh || fetchDashboardData} disabled={refreshing} className="glass-card text-cyan-300 hover:bg-white/20">
@@ -132,61 +132,61 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="spotlight-card transform hover:scale-105 transition-all duration-300">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-400">Framework Coverage</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-600">Framework Coverage</CardTitle>
             <Shield className="h-4 w-4 text-blue-400 animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-300 animate-count-up">
               {complianceMetrics.frameworkCoverage || 87}%
             </div>
-            <p className="text-xs text-blue-200 mt-1">
+            <p className="text-xs text-blue-400 mt-1">
               NIST CSF Implementation
             </p>
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card transform hover:scale-105 transition-all duration-300">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-400">Active Threats</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-600">Active Risks</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-400 animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-red-300 animate-count-up">
               {data.totalRisks || 0}
             </div>
-            <p className="text-xs text-red-200 mt-1">
-              Risk templates identified
+            <p className="text-xs text-red-400 mt-1">
+              Risk identified
             </p>
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card transform hover:scale-105 transition-all duration-300">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-400">Mitigation Progress</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600">Mitigation Progress</CardTitle>
             <Target className="h-4 w-4 text-green-400 animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-300 animate-count-up">
               {data.mitigationProgress || 73}%
             </div>
-            <p className="text-xs text-green-200 mt-1">
+            <p className="text-xs text-green-400 mt-1">
               Plans in execution
             </p>
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card transform hover:scale-105 transition-all duration-300">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-400">Investment ROI</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-600">Investment ROI</CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-400 animate-pulse" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-300 animate-count-up">
               ${(data.totalInvestment || 0) / 1000000}M
             </div>
-            <p className="text-xs text-purple-200 mt-1">
+            <p className="text-xs text-purple-400 mt-1">
               Total security investment
             </p>
           </CardContent>
@@ -195,9 +195,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
 
       {/* Framework Functions Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-blue-300">
+            <CardTitle className="flex items-center text-blue-600">
               <BarChart3 className="h-5 w-5 mr-2 animate-bounce" />
               Risk Distribution by Function
             </CardTitle>
@@ -231,9 +231,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-green-300">
+            <CardTitle className="flex items-center text-green-600">
               <PieChart className="h-5 w-5 mr-2 animate-pulse" />
               Risk Severity Matrix
             </CardTitle>
@@ -274,9 +274,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
 
       {/* Mitigation Status & Investment Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-purple-300">
+            <CardTitle className="flex items-center text-purple-600">
               <Activity className="h-5 w-5 mr-2 animate-pulse" />
               Mitigation Status Overview
             </CardTitle>
@@ -288,20 +288,20 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
             {mitigationStatus.map((status: any, index: number) => (
               <div key={status.status} className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-300 font-medium">{status.status}</span>
+                  <span className="font-medium">{status.status}</span>
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
                       className={
-                        status.status === 'Completed' ? 'text-green-400 border-green-500/50' :
-                        status.status === 'In Progress' ? 'text-blue-400 border-blue-500/50' :
-                        status.status === 'Planning' ? 'text-yellow-400 border-yellow-500/50' :
+                        status.status === 'Completed' ? 'text-green-600 border-green-500/50' :
+                        status.status === 'In Progress' ? 'text-blue-600 border-blue-500/50' :
+                        status.status === 'Planning' ? 'text-yellow-600 border-yellow-500/50' :
                         'text-red-400 border-red-500/50'
                       }
                     >
                       {status.count}
                     </Badge>
-                    <span className="text-sm text-slate-400">{status.percentage}%</span>
+                    <span className="text-sm">{status.percentage}%</span>
                   </div>
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
@@ -324,9 +324,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-cyan-300">
+            <CardTitle className="flex items-center text-cyan-600">
               <TrendingUp className="h-5 w-5 mr-2 animate-bounce" />
               Investment vs Risk Reduction
             </CardTitle>
@@ -374,9 +374,9 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
 
       {/* Maturity Assessment & Threat Landscape */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-yellow-300">
+            <CardTitle className="flex items-center text-orange-600">
               <Gauge className="h-5 w-5 mr-2 animate-pulse" />
               Framework Maturity Assessment
             </CardTitle>
@@ -388,8 +388,8 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
             {maturityProgress.map((maturity: any, index: number) => (
               <div key={maturity.function} className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-300">{maturity.function}</span>
-                  <span className="text-slate-400">{maturity.score}%</span>
+                  <span>{maturity.function}</span>
+                  <span>{maturity.score}%</span>
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
                   <div
@@ -411,13 +411,13 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
           </CardContent>
         </Card>
 
-        <Card className="spotlight-card">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center text-red-300">
+            <CardTitle className="flex items-center text-red-600">
               <Eye className="h-5 w-5 mr-2 animate-bounce" />
               Threat Landscape Analysis
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription>
               Emerging threats and attack vectors
             </CardDescription>
           </CardHeader>
@@ -455,50 +455,6 @@ export function NISTCSFDashboard({ onRefresh, refreshing = false }: NISTCSFDashb
         </Card>
       </div>
 
-      {/* Advanced Analytics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="spotlight-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <Network className="h-8 w-8 text-blue-400" />
-              <div>
-                <div className="text-2xl font-bold text-blue-300">
-                  {data.networkResilience || 94}%
-                </div>
-                <div className="text-sm text-blue-200">Network Resilience</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="spotlight-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <Lock className="h-8 w-8 text-green-400" />
-              <div>
-                <div className="text-2xl font-bold text-green-300">
-                  {data.dataProtection || 89}%
-                </div>
-                <div className="text-sm text-green-200">Data Protection</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="spotlight-card">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-3">
-              <Cpu className="h-8 w-8 text-purple-400" />
-              <div>
-                <div className="text-2xl font-bold text-purple-300">
-                  {data.automationLevel || 76}%
-                </div>
-                <div className="text-sm text-purple-200">Security Automation</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+     </div>
   )
 }

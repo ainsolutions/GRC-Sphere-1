@@ -76,16 +76,19 @@ export const GET = withContext(async({tenantDb}: HttpSessionContext,request, { p
   }
 });
 
-export const PUT = withContext(async({tenantDb}: HttpSessionContext,request, { params }: { params: { id: string } }) => {
+export const PUT = withContext(async ({ tenantDb }: HttpSessionContext, request, routeContextPromise) => {
   try {
     if (!tenantDb) {
       return NextResponse.json(
         { success: false, error: "Database not configured" },
         { status: 500 }
-      )
+      );
     }
-    const { id } = params
-    const body = await request.json()
+
+    const { params } = await routeContextPromise; // ✅ Await params
+    const { id } = params;
+
+    const body = await request.json();
 
     const {
       name,
@@ -121,16 +124,23 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext,request, { p
       exceptions,
       remediation_plan,
       notes,
-      updated_by
-    } = body
+      updated_by,
+    } = body;
 
-    // Validate required fields
     if (!name || !control_id || !framework || !category || !owner) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
-      )
+      );
     }
+
+    const toPgArray = (arr: any) =>
+      Array.isArray(arr) && arr.length > 0
+        ? `{${arr.map((v) => `"${String(v).replace(/"/g, '\\"')}"`).join(",")}}`
+        : "{}";
+
+    const toNullableDate = (value: any) =>
+      !value || value === "" || value === "null" ? null : value;
 
     const result = await tenantDb`
       UPDATE governance_controls SET
@@ -147,53 +157,54 @@ export const PUT = withContext(async({tenantDb}: HttpSessionContext,request, { p
         owner = ${owner},
         department = ${department},
         responsible_party = ${responsible_party},
-        implementation_date = ${implementation_date},
-        last_assessment_date = ${last_assessment_date},
-        next_assessment_date = ${next_assessment_date},
+        implementation_date = ${toNullableDate(implementation_date)},
+        last_assessment_date = ${toNullableDate(last_assessment_date)},
+        next_assessment_date = ${toNullableDate(next_assessment_date)},
         assessment_frequency = ${assessment_frequency},
         test_results = ${JSON.stringify(test_results)},
         evidence_location = ${evidence_location},
-        related_risks = ${JSON.stringify(related_risks)},
-        related_assets = ${JSON.stringify(related_assets)},
-        dependencies = ${JSON.stringify(dependencies)},
+        related_risks = ${toPgArray(related_risks)},
+        related_assets = ${toPgArray(related_assets)},
+        dependencies = ${toPgArray(dependencies)},
         cost_estimate = ${cost_estimate},
         maintenance_cost = ${maintenance_cost},
         automation_level = ${automation_level},
         monitoring_frequency = ${monitoring_frequency},
         reporting_frequency = ${reporting_frequency},
-        compliance_requirements = ${JSON.stringify(compliance_requirements)},
-        applicable_regulations = ${JSON.stringify(applicable_regulations)},
-        control_measures = ${JSON.stringify(control_measures)},
+        compliance_requirements = ${toPgArray(compliance_requirements)},
+        applicable_regulations = ${toPgArray(applicable_regulations)},
+        control_measures = ${toPgArray(control_measures)},
         exceptions = ${exceptions},
         remediation_plan = ${remediation_plan},
         notes = ${notes},
         updated_by = ${updated_by},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
-      RETURNING *
-    `
+      RETURNING *;
+    `;
 
     const resultArray = Array.isArray(result) ? result : [result];
     if (resultArray.length === 0) {
       return NextResponse.json(
         { success: false, error: "Control not found" },
         { status: 404 }
-      )
+      );
     }
 
     return NextResponse.json({
       success: true,
       data: resultArray[0],
-      message: "Control updated successfully"
-    })
-  } catch (error) {
-    console.error("Error updating control:", error)
+      message: "Control updated successfully",
+    });
+  } catch (error: any) {
+    console.error("Error updating control:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to update control" },
+      { success: false, error: error.message || "Failed to update control" },
       { status: 500 }
-    )
+    );
   }
 });
+
 
 export const DELETE = withContext(async({tenantDb}: HttpSessionContext, request, { params }: { params: { id: string } }) => {
   try {

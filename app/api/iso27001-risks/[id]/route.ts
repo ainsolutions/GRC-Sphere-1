@@ -24,6 +24,7 @@ export const GET = withContext(async({ tenantDb }, request, context: { params: {
         risk_level,
         status,
         owner,
+        threat,
         treatment_plan,
         residual_likelihood,
         residual_impact,
@@ -32,7 +33,7 @@ export const GET = withContext(async({ tenantDb }, request, context: { params: {
         next_review::text,
         COALESCE(controls, ARRAY[]::text[]) as controls,
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text
@@ -72,9 +73,10 @@ export const PUT = withContext(async({ tenantDb }, request,context: { params: Pr
       residual_likelihood,
       residual_impact,
       next_review,
+      threat,
       controls,
       assets,
-      control_assessment,
+      existing_controls,
       risk_treatment,
     } = body
 
@@ -107,9 +109,10 @@ const result = await tenantDb`
     residual_impact = COALESCE(${residual_impact}, residual_impact),
     residual_risk = COALESCE(${residual_risk}, residual_risk),
     next_review = COALESCE(${ nextReviewValue }::date, next_review),
+    threat = COALESCE(${threat}, threat),
     controls = COALESCE(${controls}, controls),
     assets = COALESCE(${assets}, assets),
-    control_assessment = COALESCE(${control_assessment}, control_assessment),
+    existing_controls = COALESCE(${existing_controls}, existing_controls),
     risk_treatment = COALESCE(${risk_treatment}, risk_treatment),
     updated_at = CURRENT_TIMESTAMP
   WHERE id = ${Number(id)}
@@ -131,9 +134,10 @@ const result = await tenantDb`
     residual_risk,
     last_reviewed::text,
     next_review::text,
+  COALESCE(controls, ARRAY[]::text[]) as threat,
     COALESCE(controls, ARRAY[]::text[]) as controls,
     COALESCE(assets, ARRAY[]::text[]) as assets,
-    control_assessment,
+    existing_controls,
     risk_treatment,
     created_at::text,
     updated_at::text

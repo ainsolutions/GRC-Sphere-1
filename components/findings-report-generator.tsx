@@ -135,9 +135,9 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
   }
 
   // Get unique values for filters
-  const uniqueCategories = [...new Set(findings.map((f) => f.category).filter(Boolean))]
-  const uniqueAssignees = [...new Set(findings.map((f) => f.assigned_to).filter(Boolean))]
-  const uniqueAssessments = [...new Set(findings.map((f) => f.assessment_name).filter(Boolean))]
+  const uniqueCategories = [...new Set(findings.map((f) => f.category).filter(Boolean))] as string[]
+  const uniqueAssignees = [...new Set(findings.map((f) => f.assigned_to).filter(Boolean))] as string[]
+  const uniqueAssessments = [...new Set(findings.map((f) => f.assessment_name).filter(Boolean))] as string[]
 
   // Generate chart data
   const severityData = [
@@ -270,7 +270,10 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
     total: filteredFindings.length,
     critical: filteredFindings.filter((f) => f.severity === "Critical").length,
     high: filteredFindings.filter((f) => f.severity === "High").length,
+    medium: filteredFindings.filter((f) => f.severity === "Medium").length,
+    low: filteredFindings.filter((f) => f.severity === "Low").length,
     open: filteredFindings.filter((f) => f.status === "Open").length,
+    inProgress: filteredFindings.filter((f) => f.status === "In Progress").length,
     resolved: filteredFindings.filter((f) => f.status === "Resolved" || f.status === "Closed").length,
     avgAge:
       filteredFindings.length > 0
@@ -339,12 +342,260 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
 
       toast({
         title: "Success",
-        description: "Findings report exported successfully",
+        description: "CSV report exported successfully",
       })
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to export findings report",
+        description: "Failed to export CSV report",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Export to PDF
+  const exportToPDF = async () => {
+    setLoading(true)
+    try {
+      // Dynamic import to reduce initial bundle size
+      // @ts-ignore - jspdf types will be available when library is installed
+      const jsPDF = (await import("jspdf")).default
+      // @ts-ignore - jspdf-autotable types will be available when library is installed
+      await import("jspdf-autotable")
+      
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      
+      // Add title
+      doc.setFontSize(18)
+      doc.setFont("helvetica", "bold")
+      doc.text("Findings Report", pageWidth / 2, 15, { align: "center" })
+      
+      // Add report metadata
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, pageWidth / 2, 22, { align: "center" })
+      doc.text(`Total Findings: ${filteredFindings.length}`, pageWidth / 2, 28, { align: "center" })
+      
+      // Add summary statistics
+      doc.setFontSize(12)
+      doc.setFont("helvetica", "bold")
+      doc.text("Executive Summary", 14, 38)
+      
+      doc.setFontSize(10)
+      doc.setFont("helvetica", "normal")
+      let yPos = 44
+      doc.text(`Critical: ${stats.critical}`, 14, yPos)
+      doc.text(`High: ${stats.high}`, 60, yPos)
+      doc.text(`Medium: ${stats.medium}`, 100, yPos)
+      doc.text(`Low: ${stats.low}`, 140, yPos)
+      yPos += 6
+      doc.text(`Open: ${stats.open}`, 14, yPos)
+      doc.text(`In Progress: ${stats.inProgress}`, 60, yPos)
+      doc.text(`Resolved: ${stats.resolved}`, 100, yPos)
+      doc.text(`Resolution Rate: ${stats.resolutionRate}%`, 140, yPos)
+      
+      // Prepare table data
+      const tableData = filteredFindings.map((finding) => [
+        finding.finding_id || "N/A",
+        finding.finding_title || "N/A",
+        finding.severity || "N/A",
+        finding.status || "N/A",
+        finding.category || "N/A",
+        finding.assigned_to || "Unassigned",
+        finding.due_date ? new Date(finding.due_date).toLocaleDateString() : "N/A",
+      ])
+      
+      // Add findings table using autoTable plugin
+      const docWithAutoTable = doc as any
+      docWithAutoTable.autoTable({
+        startY: yPos + 10,
+        head: [["ID", "Title", "Severity", "Status", "Category", "Assigned To", "Due Date"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: { fillColor: [59, 130, 246], fontStyle: "bold" },
+        styles: { fontSize: 8, cellPadding: 2 },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 30 },
+          6: { cellWidth: 25 },
+        },
+        didDrawPage: function (data: any) {
+          // Footer
+          doc.setFontSize(8)
+          doc.text(
+            `Page ${data.pageNumber}`,
+            pageWidth / 2,
+            doc.internal.pageSize.getHeight() - 10,
+            { align: "center" }
+          )
+        },
+      })
+      
+      // Save the PDF
+      doc.save(`findings-report-${new Date().toISOString().split("T")[0]}.pdf`)
+      
+      toast({
+        title: "Success",
+        description: "PDF report generated successfully",
+      })
+    } catch (error) {
+      console.error("PDF export error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF report. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Export to DOCX
+  const exportToDOCX = async () => {
+    setLoading(true)
+    try {
+      // Dynamic import to reduce initial bundle size
+      // @ts-ignore - docx types will be available when library is installed
+      const { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, AlignmentType, WidthType, BorderStyle } = await import("docx")
+      // @ts-ignore - file-saver types will be available when library is installed
+      const { saveAs } = await import("file-saver")
+      
+      // Create document sections
+      const sections = []
+      
+      // Title and metadata
+      sections.push(
+        new Paragraph({
+          text: "Findings Report",
+          heading: "Heading1",
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+              size: 20,
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Total Findings: ${filteredFindings.length}`,
+              size: 20,
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 300 },
+        })
+      )
+      
+      // Executive Summary
+      sections.push(
+        new Paragraph({
+          text: "Executive Summary",
+          heading: "Heading2",
+          spacing: { before: 200, after: 200 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Critical Findings: ${stats.critical}`, bold: true }),
+            new TextRun({ text: ` | High: ${stats.high} | Medium: ${stats.medium} | Low: ${stats.low}` }),
+          ],
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Status: `, bold: true }),
+            new TextRun({ text: `Open: ${stats.open} | In Progress: ${stats.inProgress} | Resolved: ${stats.resolved}` }),
+          ],
+          spacing: { after: 100 },
+        }),
+        new Paragraph({
+          children: [
+            new TextRun({ text: `Resolution Rate: `, bold: true }),
+            new TextRun({ text: `${stats.resolutionRate}%` }),
+          ],
+          spacing: { after: 300 },
+        })
+      )
+      
+      // Findings Table
+      sections.push(
+        new Paragraph({
+          text: "Findings Details",
+          heading: "Heading2",
+          spacing: { before: 200, after: 200 },
+        })
+      )
+      
+      // Create table
+      const tableRows = [
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "ID", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Title", bold: true })] })], width: { size: 25, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Severity", bold: true })] })], width: { size: 12, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Status", bold: true })] })], width: { size: 13, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Category", bold: true })] })], width: { size: 15, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Assigned To", bold: true })] })], width: { size: 20, type: WidthType.PERCENTAGE } }),
+          ],
+        }),
+        ...filteredFindings.map(
+          (finding) =>
+            new TableRow({
+              children: [
+                new TableCell({ children: [new Paragraph(finding.finding_id || "N/A")] }),
+                new TableCell({ children: [new Paragraph(finding.finding_title || "N/A")] }),
+                new TableCell({ children: [new Paragraph(finding.severity || "N/A")] }),
+                new TableCell({ children: [new Paragraph(finding.status || "N/A")] }),
+                new TableCell({ children: [new Paragraph(finding.category || "N/A")] }),
+                new TableCell({ children: [new Paragraph(finding.assigned_to || "Unassigned")] }),
+              ],
+            })
+        ),
+      ]
+      
+      const table = new Table({
+        rows: tableRows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+      })
+      
+      sections.push(table)
+      
+      // Create document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: sections,
+          },
+        ],
+      })
+      
+      // Generate and save
+      const blob = await Packer.toBlob(doc)
+      saveAs(blob, `findings-report-${new Date().toISOString().split("T")[0]}.docx`)
+      
+      toast({
+        title: "Success",
+        description: "DOCX report generated successfully",
+      })
+    } catch (error) {
+      console.error("DOCX export error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to generate DOCX report. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -433,9 +684,17 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
                   Clear Filters
                 </Button>
               )}
-              <Button onClick={exportToCSV} disabled={loading} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={exportToCSV} disabled={loading} className="bg-green-600 hover:bg-green-700" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 {loading ? "Exporting..." : "Export CSV"}
+              </Button>
+              <Button onClick={exportToPDF} disabled={loading} className="bg-red-600 hover:bg-red-700" size="sm">
+                <FileText className="mr-2 h-4 w-4" />
+                {loading ? "Generating..." : "Export PDF"}
+              </Button>
+              <Button onClick={exportToDOCX} disabled={loading} className="bg-blue-600 hover:bg-blue-700" size="sm">
+                <FileText className="mr-2 h-4 w-4" />
+                {loading ? "Generating..." : "Export DOCX"}
               </Button>
             </div>
           </div>
@@ -491,7 +750,7 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
               <SelectContent>
                 <SelectItem value="all">All Assignees</SelectItem>
                 {uniqueAssignees.map((assignee) => (
-                  <SelectItem key={assignee} value={assignee}>
+                  <SelectItem key={assignee || ''} value={assignee || ''}>
                     {assignee}
                   </SelectItem>
                 ))}
@@ -505,7 +764,7 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
               <SelectContent>
                 <SelectItem value="all">All Assessments</SelectItem>
                 {uniqueAssessments.map((assessment) => (
-                  <SelectItem key={assessment} value={assessment}>
+                  <SelectItem key={assessment || ''} value={assessment || ''}>
                     {assessment}
                   </SelectItem>
                 ))}
@@ -613,7 +872,7 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -648,7 +907,7 @@ export function FindingsReportGenerator({ findings }: FindingsReportGeneratorPro
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"

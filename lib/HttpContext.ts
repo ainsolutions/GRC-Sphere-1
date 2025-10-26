@@ -40,10 +40,10 @@ export function withContext(handler: Handler) {
             }
             const sessionAsString = req.headers.get("x-current-session") as string;
             const sessionObj = JSON.parse(sessionAsString);
-
+            
             const context: HttpSessionContext = {
                 sessionData: sessionObj,
-                userId: sessionObj.userId,
+                userId: sessionObj.id,
                 schemaId,
                 tenantDb: _tenantDb
             };

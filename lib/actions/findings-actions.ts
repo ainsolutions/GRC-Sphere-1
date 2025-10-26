@@ -21,17 +21,25 @@ async function apiFetch(path: string, init: RequestInit = {}) {
 const sql = getDatabase()
 
 // Generate incremental finding ID
-async function generateFindingId(): Promise<string> {
+async function generateFindingId(assessmentName: string): Promise<string> {
 
   try {
     // Get the current year
     const currentYear = new Date().getFullYear()
+    
+    // Truncate assessment name to 20 characters and format it
+    const truncatedName = (assessmentName || "UNKNOWN")
+      .substring(0, 20)
+      .trim()
+      .replace(/\s+/g, "-")
+      .toUpperCase()
 
-    // Get the highest finding ID for the current year
+    // Get the highest finding ID for this assessment pattern
+    const findingIdPattern = `FIND-${currentYear}-${truncatedName}-%`
     const result = await sql`
       SELECT finding_id 
       FROM assessment_findings 
-      WHERE finding_id LIKE ${"FIND-" + currentYear + "-%"}
+      WHERE finding_id LIKE ${findingIdPattern}
       ORDER BY finding_id DESC 
       LIMIT 1
     `
@@ -40,21 +48,22 @@ async function generateFindingId(): Promise<string> {
     if (result.length > 0) {
       // Extract the number part and increment
       const lastId = result[0].finding_id
-      const numberPart = lastId.split("-")[2]
+      const parts = lastId.split("-")
+      const numberPart = parts[parts.length - 1]
       nextNumber = Number.parseInt(numberPart) + 1
     }
 
-    // Format with 7 digits
-    const formattedNumber = nextNumber.toString().padStart(7, "0")
-    return `FIND-${currentYear}-${formattedNumber}`
+    // Format with 6 digits
+    const formattedNumber = nextNumber.toString().padStart(6, "0")
+    return `FIND-${currentYear}-${truncatedName}-${formattedNumber}`
   } catch (error) {
     console.error("Error generating finding ID:", error)
     // Fallback to random generation
     const year = new Date().getFullYear()
-    const randomNum = Math.floor(Math.random() * 9999999)
+    const randomNum = Math.floor(Math.random() * 999999)
       .toString()
-      .padStart(7, "0")
-    return `FIND-${year}-${randomNum}`
+      .padStart(6, "0")
+    return `FIND-${year}-UNKNOWN-${randomNum}`
   }
 }
 
@@ -79,9 +88,6 @@ export interface FindingFormData {
 export async function createFinding(data: FindingFormData) {
 
   try {
-    // Generate finding ID
-    const findingId = await generateFindingId()
-
     // Validate required fields
     if (!data.assessment_id || !data.finding_title || !data.finding_description || !data.severity) {
       return { success: false, error: "Missing required fields (assessment, title, description, severity)" }
@@ -89,7 +95,7 @@ export async function createFinding(data: FindingFormData) {
 
     // Check if assessment exists
     const assessment = await sql`
-      SELECT id, assessment_name, organization_id, department_id
+      SELECT id, assessment_name
       FROM assessments 
       WHERE id = ${data.assessment_id}
     `
@@ -97,40 +103,17 @@ export async function createFinding(data: FindingFormData) {
     if (assessment.length === 0) {
       return { success: false, error: "Assessment not found" }
     }
+    
+    // Generate finding ID with assessment name
+    const findingId = await generateFindingId(assessment[0].assessment_name)
 
-    let organizationId = assessment[0].organization_id
-    let departmentId = assessment[0].department_id
-
-    // If assessment doesn't have organization_id, get the first available organization
-    if (!organizationId) {
-      const organizations = await sql`SELECT id FROM organizations WHERE status = 'active' LIMIT 1`
-      if (organizations.length > 0) {
-        organizationId = organizations[0].id
-      } else {
-        return { success: false, error: "No valid organization found. Please ensure at least one organization exists." }
-      }
-    }
-
-    // If assessment doesn't have department_id, get the first available department for the organization
-    if (!departmentId) {
-      const departments =
-        await sql`SELECT id FROM departments WHERE organization_id = ${organizationId} AND status = 'active' LIMIT 1`
-      if (departments.length > 0) {
-        departmentId = departments[0].id
-      } else {
-        return {
-          success: false,
-          error: "No valid department found for the organization. Please ensure at least one department exists.",
-        }
-      }
-    }
 
     // Create the finding
     const result = await sql`
       INSERT INTO assessment_findings (
         finding_id, assessment_id, finding_title, finding_description, severity, 
-        category, recommendation, status, user_id, department_id, 
-        organization_id, assigned_to, due_date, created_at
+        category, recommendation, status, user_id, 
+        assigned_to, due_date, created_at
       )
       VALUES (
         ${findingId},
@@ -142,8 +125,6 @@ export async function createFinding(data: FindingFormData) {
         ${data.recommendation || null}, 
         ${data.status || "Open"}, 
         ${data.user_id || null}, 
-        ${departmentId}, 
-        ${organizationId}, 
         ${data.assigned_to || null}, 
         ${data.due_date || null},
         CURRENT_TIMESTAMP
@@ -173,14 +154,10 @@ export async function createBulkFindings(findingsData: FindingFormData[]) {
 export async function getFindings(
   assessmentId?: number,
   status?: string,
-  organizationId?: number,
-  departmentId?: number,
 ) {
   const params = new URLSearchParams()
   if (assessmentId) params.set("assessment_id", String(assessmentId))
   if (status) params.set("status", status)
-  if (organizationId) params.set("organization_id", String(organizationId))
-  if (departmentId) params.set("department_id", String(departmentId))
 
   return apiFetch(`/api/findings${params.toString() ? `?${params}` : ""}`)
 }
@@ -219,8 +196,6 @@ export async function updateFinding(id: number, data: Partial<FindingFormData>) 
         recommendation = ${data.recommendation || existing[0].recommendation},
         status = ${data.status || existing[0].status},
         user_id = ${data.user_id || existing[0].user_id},
-        department_id = ${data.department_id || existing[0].department_id},
-        organization_id = ${data.organization_id || existing[0].organization_id},
         due_date = ${data.due_date || existing[0].due_date},
         assigned_to = ${data.assigned_to || existing[0].assigned_to},
         updated_at = CURRENT_TIMESTAMP

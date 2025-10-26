@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Settings, Shield, Target, Calendar, CheckCircle, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface TreatmentPlan {
   id: number
@@ -33,9 +34,15 @@ interface TreatmentPlan {
 export function SphereAiRiskTreatmentPlan() {
   const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null)
+  //const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null)
+  const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<TreatmentPlan | null>(null)
+  const [selectedPlanForUpdate, setSelectedPlanForUpdate] = useState<TreatmentPlan | null>(null)
+
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [activeTab, setActiveTab] = useState("active")
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false) // Add this
+  const [progressValue, setProgressValue] = useState(0)           // Add this
+
 
   useEffect(() => {
     fetchTreatmentPlans()
@@ -188,12 +195,13 @@ export function SphereAiRiskTreatmentPlan() {
                 Manage and track risk mitigation strategies and implementation progress
               </CardDescription>
             </div>
-            <Button
+            <ActionButtons isTableAction={false} onAdd={setShowCreateDialog} btnAddText="New Treatment Plan" />
+            {/* <Button
               onClick={() => setShowCreateDialog(true)}
             >
               <Plus className="h-4 w-4 mr-2" />
               New Treatment Plan
-            </Button>
+            </Button> */}
           </div>
         </CardHeader>
       </Card>
@@ -297,11 +305,17 @@ export function SphereAiRiskTreatmentPlan() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedPlan(plan)}
+                        onClick={() => setSelectedPlanForDetails(plan)}
                       >
                         View Details
                       </Button>
-                      <Button size="sm">
+                      <Button size="sm"
+                        onClick={() => {
+                          setProgressValue(plan.progress) // prefill with current progress
+                          setSelectedPlanForUpdate(plan)
+                          setShowUpdateDialog(true)
+                        }}
+                      >
                         Update Progress
                       </Button>
                     </div>
@@ -314,7 +328,7 @@ export function SphereAiRiskTreatmentPlan() {
       </Tabs>
 
       {/* Treatment Plan Details Dialog */}
-      <Dialog open={!!selectedPlan} onOpenChange={() => setSelectedPlan(null)}>
+      <Dialog open={!!selectedPlanForDetails} onOpenChange={() => setSelectedPlanForDetails(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -325,28 +339,31 @@ export function SphereAiRiskTreatmentPlan() {
               Comprehensive view of the risk treatment plan and implementation status
             </DialogDescription>
           </DialogHeader>
+          
 
-          {selectedPlan && (
+
+
+          {selectedPlanForDetails && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Shield className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-                    <div className="text-2xl font-bold ">{selectedPlan.progress}%</div>
+                    <div className="text-2xl font-bold ">{selectedPlanForDetails.progress}%</div>
                     <div className="text-sm ">Completion</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Calendar className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                    <div className="text-lg font-bold ">{formatDate(selectedPlan.dueDate)}</div>
+                    <div className="text-lg font-bold ">{formatDate(selectedPlanForDetails.dueDate)}</div>
                     <div className="text-sm ">Due Date</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
                     <Target className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-                    <div className="text-lg font-bold ">{formatCurrency(selectedPlan.estimatedCost)}</div>
+                    <div className="text-lg font-bold ">{formatCurrency(selectedPlanForDetails.estimatedCost)}</div>
                     <div className="text-sm ">Budget</div>
                   </CardContent>
                 </Card>
@@ -356,15 +373,15 @@ export function SphereAiRiskTreatmentPlan() {
                 <div className="space-y-4">
                   <div>
                     <Label>Risk ID</Label>
-                    <p className="text-blue-400 font-mono">{selectedPlan.riskId}</p>
+                    <p className="text-blue-400 font-mono">{selectedPlanForDetails.riskId}</p>
                   </div>
                   <div>
                     <Label>Title</Label>
-                    <p className="font-semibold">{selectedPlan.title}</p>
+                    <p className="font-semibold">{selectedPlanForDetails.title}</p>
                   </div>
                   <div>
                     <Label>Description</Label>
-                    <p>{selectedPlan.description}</p>
+                    <p>{selectedPlanForDetails.description}</p>
                   </div>
                 </div>
 
@@ -372,24 +389,24 @@ export function SphereAiRiskTreatmentPlan() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Strategy</Label>
-                      <Badge className={`${getStrategyColor(selectedPlan.strategy)} mt-1`}>
-                        {selectedPlan.strategy}
+                      <Badge className={`${getStrategyColor(selectedPlanForDetails.strategy)} mt-1`}>
+                        {selectedPlanForDetails.strategy}
                       </Badge>
                     </div>
                     <div>
                       <Label>Priority</Label>
-                      <Badge className={`${getPriorityColor(selectedPlan.priority)} mt-1`}>
-                        {selectedPlan.priority}
+                      <Badge className={`${getPriorityColor(selectedPlanForDetails.priority)} mt-1`}>
+                        {selectedPlanForDetails.priority}
                       </Badge>
                     </div>
                   </div>
                   <div>
                     <Label>Status</Label>
-                    <Badge className={`${getStatusColor(selectedPlan.status)} mt-1`}>{selectedPlan.status}</Badge>
+                    <Badge className={`${getStatusColor(selectedPlanForDetails.status)} mt-1`}>{selectedPlanForDetails.status}</Badge>
                   </div>
                   <div>
                     <Label>Assigned To</Label>
-                    <p>{selectedPlan.assignedTo}</p>
+                    <p>{selectedPlanForDetails.assignedTo}</p>
                   </div>
                 </div>
               </div>
@@ -397,7 +414,7 @@ export function SphereAiRiskTreatmentPlan() {
               <div>
                 <Label>Security Controls</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                  {selectedPlan.controls.map((control, index) => (
+                  {selectedPlanForDetails.controls.map((control, index) => (
                     <div key={index} className="flex items-center gap-2 p-2 rounded-lg">
                       <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
                       <span>{control}</span>
@@ -409,7 +426,7 @@ export function SphereAiRiskTreatmentPlan() {
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-600/30">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedPlan(null)}
+                  onClick={() => setSelectedPlanForDetails(null)}
                 >
                   Close
                 </Button>
@@ -419,6 +436,48 @@ export function SphereAiRiskTreatmentPlan() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showUpdateDialog} onOpenChange={() => setShowUpdateDialog(false)}>
+            <DialogContent className="max-w-md">
+              {selectedPlanForUpdate && (
+                <>
+                  <Input
+                    type="number"
+                    value={progressValue}
+                    onChange={(e) => setProgressValue(Number(e.target.value))}
+                    min={0}
+                    max={100}
+                  />
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setShowUpdateDialog(false)}>Cancel</Button>
+                    <Button
+                      onClick={() => {
+                        // Update progress in main state
+                        setTreatmentPlans(prev =>
+                          prev.map(plan =>
+                            plan.id === selectedPlanForUpdate.id
+                              ? { ...plan, progress: progressValue }
+                              : plan
+                          )
+                        )
+                        // Update details dialog if open
+                        if (selectedPlanForDetails?.id === selectedPlanForUpdate.id) {
+                          setSelectedPlanForDetails({
+                            ...selectedPlanForDetails,
+                            progress: progressValue
+                          })
+                        }
+                        toast.success("Progress updated successfully")
+                        setShowUpdateDialog(false)
+                      }}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
 
       {/* Create Treatment Plan Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -498,7 +557,7 @@ export function SphereAiRiskTreatmentPlan() {
                 <Label>Assigned To</Label>
                 <Input
                   placeholder="Team or individual..."
-                  />
+                />
               </div>
             </div>
 
@@ -512,7 +571,7 @@ export function SphereAiRiskTreatmentPlan() {
                 <Input
                   type="number"
                   placeholder="0"
-                  />
+                />
               </div>
             </div>
 

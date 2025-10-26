@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -53,11 +53,34 @@ import { MASGapAnalysis } from "@/components/mas-gap-analysis"
 import { ISO27001ComplianceAssessment } from "@/components/iso27001-compliance-assessment"
 import { ISO27001RemediationTracker } from "@/components/iso27001-remediation-tracker"
 import { ISO27001SelfAssessment } from "@/components/iso27001-self-assessment"
-import { ISO27001GapAnalysis } from "@/components/iso27001-gap-analysis"  
+import { ISO27001GapAnalysis } from "@/components/iso27001-gap-analysis"
 import StarBorder from "../StarBorder"
+import { usePathname, useSearchParams } from "next/navigation"
+import { useSession } from "@/components/session-provider"
+import { ActionButtons } from "@/components/ui/action-buttons"
 
 export default function CompliancePage() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState("")
+
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const tab: string = searchParams.get('tab') ?? '';
+    setActiveTab(tab);
+
+  }, [searchParams]);
+
+  const { hasPermission } = useSession();
+  const path = `${usePathname()}?tab=${activeTab}`;
+  const allowed:Boolean = activeTab == '' ? false : hasPermission(path,"read"); 
+  
+  if (!allowed) {
+    return (
+      <main className="flex-1 overflow-y-auto flex items-center justify-center">
+        <div className="text-red-400 text-sm">🚫 You don’t have access to this section.</div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -67,17 +90,14 @@ export default function CompliancePage() {
             Compliance Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Monitor and manage regulatory compliance across multiple frameworks
+            Monitor and manage regulatory compliance
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Assessment
-        </Button>
+        <ActionButtons isTableAction={false} onAdd={() => {}} btnAddText="New Assessment"/>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+{/*       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="gradient-card-primary border-0 shadow-lg">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-cyan-300">
@@ -128,11 +148,11 @@ export default function CompliancePage() {
             <p className="text-xs text-muted-foreground">Next: NIS2 Review (Dec 10)</p>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-12 mt-4">
+        {/* <TabsList className="grid w-full grid-cols-12 mt-4">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Overview
@@ -181,380 +201,7 @@ export default function CompliancePage() {
             <FileText className="h-4 w-4" />
             Reports
           </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <Card className="gradient-card-primary border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Compliance Overview
-              </CardTitle>
-              <CardDescription>Current status across all compliance frameworks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* HIPAA Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <div>
-                        <h3 className="font-semibold">HIPAA</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 15, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={87} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-green-600">87%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">5 findings</p>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Active</Badge>
-                  </div>
-                </div>
-
-                {/* NESA UAE Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                      <div>
-                        <h3 className="font-semibold">NESA UAE</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 10, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={72} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-yellow-600">72%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">12 findings</p>
-                    </div>
-                    <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* MICA Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <div>
-                        <h3 className="font-semibold">MICA</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 8, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={78} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-blue-600">78%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">8 findings</p>
-                    </div>
-                    <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* SAMA Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <div>
-                        <h3 className="font-semibold">SAMA</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 5, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={75} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-blue-600">75%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">10 findings</p>
-                    </div>
-                    <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* NIS2 Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-purple-500" />
-                      <div>
-                        <h3 className="font-semibold">NIS2</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 3, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={68} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-purple-600">68%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">15 findings</p>
-                    </div>
-                    <Badge className="bg-purple-100 text-purple-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* Qatar NIA Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-teal-500" />
-                      <div>
-                        <h3 className="font-semibold">Qatar NIA</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 2, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={71} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-teal-600">71%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">12 findings</p>
-                    </div>
-                    <Badge className="bg-teal-100 text-teal-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* DORA Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-indigo-500" />
-                      <div>
-                        <h3 className="font-semibold">DORA</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 1, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={73} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-indigo-600">73%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">11 findings</p>
-                    </div>
-                    <Badge className="bg-indigo-100 text-indigo-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* MAS Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500" />
-                      <div>
-                        <h3 className="font-semibold">MAS Singapore</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Dec 28, 2023</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={76} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-orange-600">76%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">9 findings</p>
-                    </div>
-                    <Badge className="bg-orange-100 text-orange-800">In Progress</Badge>
-                  </div>
-                </div>
-
-                {/* ISO 27001 Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <div>
-                        <h3 className="font-semibold">ISO 27001</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Dec 1, 2023</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={84} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-green-600">84%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">3 findings</p>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Active</Badge>
-                  </div>
-                </div>
-
-                {/* SOC 2 Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <div>
-                        <h3 className="font-semibold">SOC 2</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 20, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={91} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-green-600">91%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">2 findings</p>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Active</Badge>
-                  </div>
-                </div>
-
-                {/* PCI DSS Framework */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-blue-200/50 hover:bg-gradient-to-r hover:from-blue-50/30 hover:via-purple-50/30 hover:to-cyan-50/30 transition-all duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full bg-orange-500" />
-                      <div>
-                        <h3 className="font-semibold">PCI DSS</h3>
-                        <p className="text-sm text-muted-foreground">Last assessed: Jan 20, 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="flex items-center space-x-2">
-                        <Progress value={82} className="w-20 h-2" />
-                        <span className="text-sm font-medium text-orange-600">82%</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">14 findings</p>
-                    </div>
-                    <Badge className="bg-orange-100 text-orange-800">In Progress</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="gradient-card-secondary border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
-                  Recent Activities
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <Activity className="h-4 w-4 text-green-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">HIPAA assessment completed</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">NIS2 compliance score improved</p>
-                      <p className="text-xs text-muted-foreground">6 hours ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">NESA UAE compliance score improved</p>
-                      <p className="text-xs text-muted-foreground">1 day ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">ISO 27001 finding identified</p>
-                      <p className="text-xs text-muted-foreground">2 days ago</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">SOC 2 controls validated</p>
-                      <p className="text-xs text-muted-foreground">3 days ago</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="gradient-card-accent border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-lg bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Upcoming Assessments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">NIS2 Review</p>
-                      <p className="text-xs text-muted-foreground">Due: Dec 10, 2024</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      10 days
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">HIPAA Review</p>
-                      <p className="text-xs text-muted-foreground">Due: Dec 15, 2024</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      15 days
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">NESA UAE Assessment</p>
-                      <p className="text-xs text-muted-foreground">Due: Mar 10, 2025</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      100 days
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">ISO 27001 Audit</p>
-                      <p className="text-xs text-muted-foreground">Due: Jun 1, 2025</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      183 days
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">SOC 2 Type II</p>
-                      <p className="text-xs text-muted-foreground">Due: Jul 20, 2025</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      232 days
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+        </TabsList> */}
 
         <TabsContent value="hipaa" className="space-y-4">
           <Tabs defaultValue="assessment" className="space-y-4">

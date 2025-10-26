@@ -33,9 +33,10 @@ export const POST = withContext(async({ tenantDb }, request) => {
       residual_likelihood = 1,
       residual_impact = 1,
       next_review,
+      threat = [],
       controls = [],
       assets = [],
-      control_assessment,
+      existing_controls,
       risk_treatment,
     } = body
 
@@ -64,11 +65,11 @@ export const POST = withContext(async({ tenantDb }, request) => {
       INSERT INTO iso27001_risks (
         risk_id, title, description, category, likelihood, impact, 
         status, owner, treatment_plan, residual_likelihood, residual_impact, 
-        residual_risk, next_review, controls, assets, control_assessment, risk_treatment
+        residual_risk, next_review, controls, assets, existing_controls, risk_treatment, threat
       ) VALUES (
         ${risk_id}, ${title}, ${description}, ${category}, ${likelihood}, ${impact},
         ${status}, ${owner}, ${treatment_plan}, ${residual_likelihood}, ${residual_impact},
-        ${residual_risk}, ${nextReview}, ${controls}, ${assets}, ${control_assessment}, ${risk_treatment}
+        ${residual_risk}, ${nextReview}, ${controls}, ${assets}, ${existing_controls}, ${risk_treatment}, ${threat}
       )
       RETURNING 
         id,
@@ -88,9 +89,10 @@ export const POST = withContext(async({ tenantDb }, request) => {
         residual_risk,
         last_reviewed::text,
         next_review::text,
+        COALESCE(threat, ARRAY[]::text[]) as threat,
         COALESCE(controls, ARRAY[]::text[]) as controls,
         COALESCE(assets, ARRAY[]::text[]) as assets,
-        control_assessment,
+        COALESCE(existing_controls, ARRAY[]::text[]) as existing_controls,
         risk_treatment,
         created_at::text,
         updated_at::text

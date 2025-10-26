@@ -93,13 +93,25 @@ function Dashboard() {
   const fetchMetrics = async () => {
     setRefreshing(true);
     try {
-      const response = await fetch("/api/dashboard/metrics");
-      if (response.ok) {
-        const data = await response.json();
-        setMetrics(data);
-      } else {
-        console.error("Failed to fetch metrics");
+      const schemaId = localStorage.getItem("schema_id");
+      const session = localStorage.getItem("session_data");
+
+      const response = await fetch("/api/dashboard/metrics", {
+        headers: {
+          "x-schema-id": schemaId || "",
+          "x-current-session": session || "{}",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Failed to fetch metrics:", response.status, errText);
+        return;
       }
+
+      const data = await response.json();
+      setMetrics(data);
     } catch (error) {
       console.error("Error fetching metrics:", error);
     } finally {

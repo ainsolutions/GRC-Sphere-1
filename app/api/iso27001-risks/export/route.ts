@@ -24,7 +24,7 @@ const HEADERS = [
   "updated_at",
   "residual_likelihood",
   "residual_impact",
-  "control_assessment",
+  "existing_controls",
   "risk_treatment",
 ] as const
 
@@ -54,7 +54,7 @@ export const GET = withContext(async ({ tenantDb }, request) => {
         updated_at,
         residual_likelihood,
         residual_impact,
-        control_assessment,
+        existing_controls,
         risk_treatment
       FROM iso27001_risks
       ORDER BY created_at DESC

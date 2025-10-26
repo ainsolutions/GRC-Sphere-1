@@ -5,7 +5,6 @@ import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import StarBorder from '@/app/StarBorder'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -139,7 +138,8 @@ export default function AssetsPage() {
 
   const handleDeleteAsset = (asset: any) => {
     setAssetToDelete(asset)
-    setIsDeleteDialogOpen(true)
+    //setIsDeleteDialogOpen(true)
+    confirmDelete();
   }
 
   const confirmDelete = async () => {
@@ -612,6 +612,9 @@ export default function AssetsPage() {
     return "#0891b2"
   }
 
+
+
+
   return (
     <>
       <div className="space-y-6">
@@ -625,7 +628,7 @@ export default function AssetsPage() {
             </p>
           </div>
           <div className="flex space-x-2">
-          <AssetChatbot onAssetCreated={handleFormSuccess} />
+            <AssetChatbot onAssetCreated={handleFormSuccess} />
             <Button
               className="w-full"
               onClick={() => fetchAssets(searchTerm)}
@@ -635,7 +638,7 @@ export default function AssetsPage() {
               <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <ActionButtons isTableAction={false} onAdd={handleAddAsset} btnText="Add Asset"/>
+            <ActionButtons isTableAction={false} onAdd={handleAddAsset} btnAddText="Add Asset" />
 
             {/* {(hasPermission(pathName, "create")) && (<Button
               className="w-full"
@@ -809,7 +812,7 @@ export default function AssetsPage() {
                                 {asset.classification}
                               </Badge>
                             </TableCell>
-                            <TableCell>{asset.owner}</TableCell>
+                            <TableCell>{asset.department}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className={getValueColor(asset.business_value)}>
                                 {asset.business_value}
@@ -833,38 +836,10 @@ export default function AssetsPage() {
                                 <ActionButtons isTableAction={true} 
                                   onView={() => handleViewAsset(asset)} 
                                   onEdit={() => handleEditAsset(asset)} 
-                                  onDelete={() => handleDeleteAsset(asset)}   
+                                  onDelete={() => handleDeleteAsset(asset)}  
+                                  actionObj={asset}
                                   deleteDialogTitle={asset.asset_name}                                
                                   />
-
-                                {/* {(hasPermission(pathName, "read")) && (
-                                  <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewAsset(asset)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                )}
-                                 {(hasPermission(pathName, "update")) && (
-                                  <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditAsset(asset)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                )}
-                                 {(hasPermission(pathName, "delete")) && (
-                                  <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteAsset(asset)}
-                                  className="text-red-400 hover:bg-red-900/20 hover:text-red-300 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                                )} */}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -981,11 +956,7 @@ export default function AssetsPage() {
                     <Network className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No Assets to Display</h3>
                     <p className="text-muted-foreground mb-4">Add some assets to see the tree visualization</p>
-                    <ActionButtons isTableAction={false} onAdd={handleAddAsset} btnText="Add First Asset"/>
-                    {/* <Button onClick={} className="bg-gradient-to-r from-purple-600 to-cyan-600">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add First Asset
-                    </Button> */}
+                    <ActionButtons isTableAction={false} onAdd={handleAddAsset} btnAddText="Add First Asset"/>
                   </div>
                 ) : (
                   <div className="w-full h-[600px] border rounded-lg bg-gradient-to-br from-purple-50/30 via-cyan-50/30 to-blue-50/30 overflow-hidden">
@@ -1063,7 +1034,10 @@ export default function AssetsPage() {
         </Tabs>
       </div>
 
-      <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
+      <Dialog open={isFormDialogOpen} onOpenChange={(open) => {
+        setIsFormDialogOpen(open);
+        if (!open) setTimeout(() => setSelectedAsset(null), 200);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -1076,28 +1050,7 @@ export default function AssetsPage() {
 
       <AssetViewDialog asset={viewingAsset} open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen} />
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the asset "{assetToDelete?.asset_name}" (ID:{" "}
-              {assetToDelete?.asset_id}) and remove all associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
-  
     </>
   )
 }

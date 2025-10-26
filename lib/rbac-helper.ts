@@ -6,6 +6,7 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
 
   const result = (await tenantDb`
     SELECT 
+
       p.id          AS page_id,
       p.name        AS page_name,
       p.path        AS page_path,
@@ -38,5 +39,7 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
     canCreate: row.can_create,
     canUpdate: row.can_update,
     canDelete: row.can_delete,
+    parent_id: row.parent_id,
+    priority: row.priority,
   }));
 }

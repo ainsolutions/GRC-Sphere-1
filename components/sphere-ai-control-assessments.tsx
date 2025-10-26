@@ -20,6 +20,7 @@ import {
   Edit,
   Calendar,
 } from "lucide-react"
+import { ActionButtons } from "./ui/action-buttons"
 
 interface ControlAssessment {
   id: number
@@ -296,10 +297,11 @@ export function SphereAiControlAssessments() {
               Monitor and evaluate security control effectiveness
             </CardDescription>
           </div>
-          <Button className="flex items-center gap-2">
+          <ActionButtons isTableAction={false} onAdd={() => { }} btnAddText="New Assessment" />
+          {/* <Button className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             New Assessment
-          </Button>
+          </Button> */}
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -435,12 +437,19 @@ export function SphereAiControlAssessments() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" className="h-8 w-8">
+                            <ActionButtons isTableAction={true}
+                              onView={() => { }}
+                              onEdit={() => { }}
+                                actionObj={assessment}
+                            // onDelete={() => {}}   
+                            // deleteDialogTitle={}                                
+                            />
+                            {/* <Button variant="outline" size="icon" className="h-8 w-8">
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button variant="outline" size="icon" className="h-8 w-8">
                               <Edit className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -453,7 +462,7 @@ export function SphereAiControlAssessments() {
             <TabsContent value="compliance" className="space-y-6">
               <div className="space-y-4">
                 {assessments.map((assessment) => (
-                    <Card key={assessment.id}>
+                  <Card key={assessment.id}>
                     <CardContent className="p-6">
                       <div className="space-y-4">
                         <div className="flex items-start justify-between">

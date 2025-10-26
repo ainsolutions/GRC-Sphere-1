@@ -98,54 +98,29 @@ export const POST = withContext(async ({ tenantDb }, request: Request) => {
 
 
 async function getSideBarMenu(perms) {
+  //sorting on the basis of priority
+  const sorted = [...perms].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
 
-  /* const _sidebarMenu = permissions.reduce((acc: any, item) => {
-    if (!acc[item.module]) {
-      acc[item.module] = {
-        module: item.module,
-        pages: [],
-      };
-    }
+  //Build lookup map for quick parent–child relations
+  const map = new Map();
+  sorted.forEach(p => map.set(p.pageId, {
+    title: p.pageName,
+    href: p.pagePath === "-" ? null : p.pagePath,
+    icon: p.icon,
+    children: []
+  }));
 
-    acc[item.module].pages.push({
-      id: item.pageId,
-      name: item.pageName,
-      path: item.pagePath,
-      //  canRead: item.canRead,
-      // canCreate: item.canCreate,
-      // canUpdate: item.canUpdate,
-      // canDelete: item.canDelete,
-    });
-
-    return acc;
-  }, {}); */
-
-  const groupedByModule = perms.reduce((dict: any, item) => {
-    if (!dict[item.module]) dict[item.module] = []
-    dict[item.module].push(item)
-    return dict
-  }, {})
-  
-  const _sidebarMenu = Object.entries(groupedByModule).map(([module, items]: [string, any[]]) => {
-    if (items.length > 1) {
-      return {
-        title: module,
-        icon: items[0].icon,
-        children: items.map(it => ({
-          title: it.pageName,
-          href: it.pagePath,
-          icon: it.icon,
-        })),
-      }
+  //Build tree structure
+  const _sidebarMenu: any[] = [];
+  sorted.forEach(p => {
+    const node = map.get(p.pageId);
+    if (p.parent_id) {
+      const parent = map.get(p.parent_id);
+      if (parent) parent.children.push(node);
+      else _sidebarMenu.push(node);
     } else {
-      const it = items[0]
-      return {
-        title: it.pageName,
-        href: it.pagePath,
-        icon: it.icon,
-      }
+      _sidebarMenu.push(node);
     }
-  })
-
-  return Object.values(_sidebarMenu);
+  });
+  return _sidebarMenu.filter(item => item.href || item.children.length);
 }
