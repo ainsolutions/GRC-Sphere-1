@@ -39,34 +39,41 @@ export async function createSession(userObj: any) {
 }
 
 export async function getSession() {
-    const token = (await cookies()).get(SessionEnum.SESSION_TOKEN_COOKIE_NAME)?.value;
+  const token = (await cookies()).get(SessionEnum.SESSION_TOKEN_COOKIE_NAME)?.value;
+  const schemaid = (await cookies()).get(SessionEnum.SCHEMA_ID_COOKIE_NAME)?.value;
 
-    const schemaid = (await cookies()).get(SessionEnum.SCHEMA_ID_COOKIE_NAME)?.value;
+  if (!token || !schemaid) return null;
 
-    if (!token || !schemaid) return null;
+  const schemaDB = await initSchemaDBClient(schemaid);
 
-    schemaDB = await initSchemaDBClient(schemaid);
+  const result = await schemaDB`
+    SELECT user_id, session_data, expires_at 
+    FROM sessions 
+    WHERE token = ${token}
+  `;
 
+  if (result.length === 0) return null;
 
-    // const GetSessionStmt: string = `SELECT user_id,expires_at FROM sessions WHERE token = ${token}`;
-    const result = await schemaDB `SELECT user_id,session_data,expires_at FROM sessions WHERE token = ${token}`;
-    // const result = await queryWithSchema("SELECT user_id,expires_at FROM {{schema}}.sessions WHERE token = $1",[token]);
+  const session = result[0];
 
-    if (result.length === 0) return null;
-    
-    const session = result[0];
-    const userId = session.user_id;
+  if (new Date(session.expires_at) < new Date()) {
+    await schemaDB`DELETE FROM sessions WHERE token = ${token}`;
+    return null;
+  }
 
-    if (new Date(session.expires_at) < new Date()) {
-        // const deleteSessionQuery: string = `DELETE FROM sessions Where token = ${token}`;
-        await schemaDB `DELETE FROM sessions Where token = ${token}`;
-        return null;
-    }
+  let userObj;
 
-    const userObj = JSON.parse(session.session_data);
+  try {
+    // ✅ Parse only if it's a string, not already an object
+    userObj = typeof session.session_data === "string"
+      ? JSON.parse(session.session_data)
+      : session.session_data;
+  } catch (err) {
+    console.error("⚠️ Invalid session_data:", session.session_data);
+    userObj = {};
+  }
 
-    return userObj;
-
+  return userObj;
 }
 
 export async function destroySession() {
