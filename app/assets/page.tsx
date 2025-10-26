@@ -58,6 +58,8 @@ import { Tree } from "react-tree-graph";
 import { useSession } from "@/components/session-provider";
 import { usePathname } from "next/navigation"
 import { ActionButtons } from "@/components/ui/action-buttons"
+import AssetBIAForm from "@/components/asset-bia-form"
+import AssetBIARegister from "@/components/asset-bia-register"
 
 export default function AssetsPage() {
   const { theme } = useTheme()
@@ -698,7 +700,7 @@ export default function AssetsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="assets" className="flex items-center gap-2">
               <Database className="h-6 w-6" />
               Assets
@@ -706,6 +708,10 @@ export default function AssetsPage() {
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="h-6 w-6" />
               Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="bia" className="flex items-center gap-2">
+              <Shield className="h-6 w-6" />
+              Business Impact Analysis
             </TabsTrigger>
           </TabsList>
 
@@ -882,6 +888,21 @@ export default function AssetsPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="bia" className="space-y-4">
+            <Tabs defaultValue="analysis">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+              <TabsContent value="analysis">
+                <AssetBIAForm />
+              </TabsContent>
+              <TabsContent value="register">
+                <AssetBIARegister />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">
