@@ -46,11 +46,16 @@ export async function getSession() {
 
   const schemaDB = await initSchemaDBClient(schemaid);
 
+  if (!schemaDB) {
+    console.error("schemaDB is undefined");
+    return null;
+  }
+
   const result = await schemaDB`
     SELECT user_id, session_data, expires_at 
     FROM sessions 
     WHERE token = ${token}
-  `;
+  ` as Record<string, any>[];
 
   if (result.length === 0) return null;
 

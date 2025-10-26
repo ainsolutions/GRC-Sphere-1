@@ -1,8 +1,26 @@
 import { neon } from "@neondatabase/serverless";
 import { initSchemaDBClient } from "@/lib/db";
 
-export async function getUserRole(userId: number, schemaid: string): Promise<[]> {
+export interface UserRole {
+  pageId: number;
+  pageName: string;
+  pagePath: string;
+  module: string;
+  icon: string | null;
+  canRead: boolean;
+  canCreate: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+  parentId: number | null;
+  priority: number | null;
+}
+
+export async function getUserRole(userId: number, schemaid: string): Promise<UserRole[]> {
   const tenantDb = await initSchemaDBClient(schemaid);
+
+  if (!tenantDb) {
+    throw new Error("Failed to initialize tenant database client.");
+  }
 
   const result = (await tenantDb`
     SELECT 
@@ -16,7 +34,9 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
       rpa.can_read,
       rpa.can_create,
       rpa.can_update,
-      rpa.can_delete
+      rpa.can_delete,
+      p.parent_id,
+      p.priority
     FROM user_roles ur
     INNER JOIN roles r 
       ON r.id = ur.role_id
@@ -27,19 +47,19 @@ export async function getUserRole(userId: number, schemaid: string): Promise<[]>
     WHERE ur.user_id = ${userId}
       AND rpa.has_access = true
       AND p.is_active = true
-  `) as Record<string, string>[];
+  `) as Record<string, any>[];
 
   return result.map((row: any) => ({
-    pageId: row.page_id,
+    pageId: Number(row.page_id),
     pageName: row.page_name,
     pagePath: row.page_path,
     module: row.module,
     icon: row.icon,
-    canRead: row.can_read,
-    canCreate: row.can_create,
-    canUpdate: row.can_update,
-    canDelete: row.can_delete,
-    parent_id: row.parent_id,
-    priority: row.priority,
+    canRead: Boolean(row.can_read),
+    canCreate: Boolean(row.can_create),
+    canUpdate: Boolean(row.can_update),
+    canDelete: Boolean(row.can_delete),
+    parentId: row.parent_id !== undefined ? (row.parent_id !== null ? Number(row.parent_id) : null) : null,
+    priority: row.priority !== undefined ? (row.priority !== null ? Number(row.priority) : null) : null,
   }));
 }
