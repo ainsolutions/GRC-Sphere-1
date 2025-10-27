@@ -1,5 +1,7 @@
 "use client"
 
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,6 +23,7 @@ import {
   Code
 } from "lucide-react"
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from "recharts"
+import useSWR from "swr"
 
 interface CTODashboardProps {
   metrics: any
@@ -40,15 +43,58 @@ const TECH_COLORS = {
 }
 
 export function CTODashboard({ metrics, onRefresh, refreshing }: CTODashboardProps) {
-  // CTO-specific technical metrics
-  const techMetrics = {
-    systemUptime: 99.7,
-    averageResponseTime: 245,
-    infrastructureUtilization: 78,
-    dataCenterCapacity: 65,
-    cloudMigrationProgress: 85,
-    apiAvailability: 99.9
-  }
+  const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+  // Data: Vulnerabilities
+  const { data: vulnStatsResp } = useSWR(`/api/vulnerabilities/getVulnerabilityStats`, fetcher)
+  const vulnStats = vulnStatsResp?.data || {}
+
+  const vulnerabilityStatusData = [
+    { name: 'Open', count: Number(vulnStats.open || 0) },
+    { name: 'In Progress', count: Number(vulnStats.in_progress || 0) },
+    { name: 'Resolved', count: Number(vulnStats.resolved || 0) },
+  ]
+  const vulnerabilitySeverityData = [
+    { name: 'Critical', count: Number(vulnStats.critical || 0), color: '#ef4444' },
+    { name: 'High', count: Number(vulnStats.high || 0), color: '#f97316' },
+    { name: 'Medium', count: Number(vulnStats.medium || 0), color: '#eab308' },
+    { name: 'Low', count: Number(vulnStats.low || 0), color: '#22c55e' },
+  ]
+
+  // Data: Incident Remediation
+  const { data: incidentStatsResp } = useSWR(`/api/incident-remediation/stats`, fetcher)
+  const incidentStats = incidentStatsResp?.data || {}
+  const incidentStatusData = (incidentStats.statusStats || []).map((s: any) => ({ name: s.status, count: Number(s.count || 0) }))
+  const incidentPriorityData = (incidentStats.priorityStats || []).map((p: any) => ({ name: p.priority, count: Number(p.count || 0) }))
+
+  // Data: Technology Risks
+  const { data: techRisksResp } = useSWR(`/api/technology-risks?limit=200`, fetcher)
+  const techRisks = Array.isArray(techRisksResp?.risks) ? techRisksResp.risks : []
+  const techRiskStatusMap: Record<string, number> = {}
+  const techRiskLevelMap: Record<string, number> = {}
+  const techTreatmentStateMap: Record<string, number> = {}
+  techRisks.forEach((r: any) => {
+    const status = (r.status || 'open') as string
+    const level = (r.risk_level || 'Low') as string
+    const treatment = (r.treatment_state || 'planned') as string
+    techRiskStatusMap[status] = (techRiskStatusMap[status] || 0) + 1
+    techRiskLevelMap[level] = (techRiskLevelMap[level] || 0) + 1
+    techTreatmentStateMap[treatment] = (techTreatmentStateMap[treatment] || 0) + 1
+  })
+  const techRiskStatusData = Object.entries(techRiskStatusMap).map(([name, count]) => ({ name, count }))
+  const techRiskLevelData = Object.entries(techRiskLevelMap).map(([name, count]) => ({ name, count }))
+  const techTreatmentStateData = Object.entries(techTreatmentStateMap).map(([name, count]) => ({ name, count }))
+
+  // Data: Controls Implementation
+  const { data: controlsResp } = useSWR(`/api/governance/controls`, fetcher)
+  const controls = Array.isArray(controlsResp?.data) ? controlsResp.data : []
+  const controlImplStatusMap: Record<string, number> = {}
+  controls.forEach((c: any) => {
+    const s = (c.implementation_status || 'not_implemented') as string
+    controlImplStatusMap[s] = (controlImplStatusMap[s] || 0) + 1
+  })
+  const controlImplStatusData = Object.entries(controlImplStatusMap).map(([name, count]) => ({ name, count }))
+
 
   const infrastructureData = [
     { name: 'Servers', utilized: 85, total: 100, color: TECH_COLORS.infrastructure },
@@ -74,13 +120,15 @@ export function CTODashboard({ metrics, onRefresh, refreshing }: CTODashboardPro
     { name: 'AI/ML Platform', progress: 78, risk: 'Low', status: 'On Track' }
   ]
 
-  const vulnerabilityData = [
-    { category: 'Web Apps', count: 23, severity: 'High' },
-    { category: 'Databases', count: 12, severity: 'Critical' },
-    { category: 'Network', count: 18, severity: 'Medium' },
-    { category: 'Servers', count: 31, severity: 'High' },
-    { category: 'Mobile Apps', count: 8, severity: 'Low' }
-  ]
+  // Derived fallback for vulnerability severity (if API not loaded yet)
+  const vulnerabilityData = vulnerabilitySeverityData.some(v => v.count > 0)
+    ? vulnerabilitySeverityData.map(v => ({ category: v.name, count: v.count, severity: v.name }))
+    : [
+        { category: 'Critical', count: 0, severity: 'Critical' },
+        { category: 'High', count: 0, severity: 'High' },
+        { category: 'Medium', count: 0, severity: 'Medium' },
+        { category: 'Low', count: 0, severity: 'Low' }
+      ]
 
   return (
     <div className="space-y-8">
@@ -319,20 +367,14 @@ export function CTODashboard({ metrics, onRefresh, refreshing }: CTODashboardPro
               Vulnerability Landscape
             </CardTitle>
             <CardDescription>
-              Security vulnerabilities by technology category
+              Security vulnerabilities by severity
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={vulnerabilityData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis
-                  dataKey="category"
-                  tick={{ fill: "#9ca3af", fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
+                <XAxis dataKey="category" tick={{ fill: "#9ca3af", fontSize: 12 }} />
                 <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{
@@ -345,11 +387,80 @@ export function CTODashboard({ metrics, onRefresh, refreshing }: CTODashboardPro
                 <Bar dataKey="count" fill="#ef4444" name="Vulnerabilities" />
               </BarChart>
             </ResponsiveContainer>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-slate-300">
+              <div>Overdue: <span className="text-red-400 font-semibold">{Number(vulnStats.overdue || 0)}</span></div>
+              <div>Total: <span className="text-slate-200 font-semibold">{Number(vulnStats.total || 0)}</span></div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Technology Health Overview */}
+      {/* Remediation Patterns: Vulnerabilities and Incidents */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              Vulnerability Remediation
+            </CardTitle>
+            <CardDescription>
+              Status distribution and remediation progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={vulnerabilityStatusData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                <Bar dataKey="count" fill="#3b82f6" name="Items" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Activity className="h-5 w-5 mr-2" />
+              Incident Remediation
+            </CardTitle>
+            <CardDescription>
+              Status and priority distribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={incidentStatusData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                    <Bar dataKey="count" fill="#10b981" name="Status" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={incidentPriorityData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                    <Bar dataKey="count" fill="#f59e0b" name="Priority" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Technology Health Overview */
+      }
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -403,6 +514,76 @@ export function CTODashboard({ metrics, onRefresh, refreshing }: CTODashboardPro
                 </div>
                 <div className="text-sm text-red-600">Critical Vulns</div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Technology Risks and Controls */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Shield className="h-5 w-5 mr-2" />
+              Technology Risks Status
+            </CardTitle>
+            <CardDescription>
+              Distribution by risk level and treatment state
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={techRiskLevelData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                    <Bar dataKey="count" fill="#ef4444" name="Risk Level" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={techTreatmentStateData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                    <Bar dataKey="count" fill="#3b82f6" name="Treatment" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-slate-300">
+              Total Risks: <span className="font-semibold">{techRisks.length}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Settings className="h-5 w-5 mr-2" />
+              Controls Implementation Status
+            </CardTitle>
+            <CardDescription>
+              Distribution by implementation status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={controlImplStatusData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="name" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                <YAxis tick={{ fill: "#9ca3af", fontSize: 12 }} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e293b", border: "1px solid #475569", borderRadius: "6px", color: "#fff" }} />
+                <Bar dataKey="count" fill="#8b5cf6" name="Controls" />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-4 text-sm text-slate-300">
+              Total Controls: <span className="font-semibold">{controls.length}</span>
             </div>
           </CardContent>
         </Card>

@@ -54,6 +54,7 @@ import { ISO27001ComplianceAssessment } from "@/components/iso27001-compliance-a
 import { ISO27001RemediationTracker } from "@/components/iso27001-remediation-tracker"
 import { ISO27001SelfAssessment } from "@/components/iso27001-self-assessment"
 import { ISO27001GapAnalysis } from "@/components/iso27001-gap-analysis"
+import { SBPETRMFComplianceAssessment } from "@/components/sbp-etrmf-compliance-assessment"
 import StarBorder from "../StarBorder"
 import { usePathname, useSearchParams } from "next/navigation"
 import { useSession } from "@/components/session-provider"
@@ -310,6 +311,19 @@ export default function CompliancePage() {
 
             <TabsContent value="remediation">
               <NESAUAERemediationTracker />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        {/* SBP ETRMF - mirrors NESA structure */}
+        <TabsContent value="sbp-etrmf" className="space-y-4">
+          <Tabs defaultValue="assessment" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="assessment">Assessment</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="assessment">
+              <SBPETRMFComplianceAssessment />
             </TabsContent>
           </Tabs>
         </TabsContent>
