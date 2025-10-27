@@ -74,6 +74,7 @@
     "recharts": "latest",
     "sonner": "latest",
     "speech-recognition": "latest",
+    "swr": "^2.3.6",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.179.1",
