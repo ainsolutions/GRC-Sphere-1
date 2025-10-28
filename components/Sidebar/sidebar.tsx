@@ -55,11 +55,7 @@ const OldSidebarItems: SidebarItem[] = [
         href: "/risks/fair/portfolio",
         icon: RefLucideReact.BarChart3,
       },
-      {
-        title: "Technology Risk",
-        href: "/risks/technology",
-        icon: RefLucideReact.Cpu,
-      },
+   
       {
         title: "Threats",
         href: "/risks/threats",
@@ -71,6 +67,11 @@ const OldSidebarItems: SidebarItem[] = [
     title: "Third Party Risk",
     href: "/third-party-risk",
     icon: RefLucideReact.Briefcase,
+  },
+  {
+    title: "Technology Risk",
+    href: "/risks/technology",
+    icon: RefLucideReact.Cpu,
   },
   {
     title: "IS Assessments",
@@ -209,6 +210,28 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
 
   const sidebarItems: SidebarItem[] = hydrateIcons(menuList) 
 
+  // Inject Technology Risk -> Change Management submenu entry if not provided by RBAC menu
+  const injectedItems: SidebarItem[] = (function inject(items: SidebarItem[]): SidebarItem[] {
+    const addIfTechnology = (item: SidebarItem): SidebarItem => {
+      if (item.href === "/risks/technology") {
+        const exists = (item.children || []).some((c) => c.href === "/risks/technology/change-management")
+        if (!exists) {
+          const child = {
+            title: "Change Management",
+            href: "/risks/technology/change-management",
+            icon: (RefLucideReact as any).ClipboardList,
+          } as SidebarItem
+          return { ...item, children: [ ...(item.children || []), child ] }
+        }
+      }
+      if (item.children && item.children.length) {
+        return { ...item, children: inject(item.children) }
+      }
+      return item
+    }
+    return items.map(addIfTechnology)
+  })(sidebarItems)
+
   useEffect(() => {
     const pathSegments = pathname.split("/").filter(Boolean)
     const newExpandedItems: string[] = []
@@ -311,7 +334,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
       <div className="relative z-20 flex flex-col h-full">
         {/* Navigation */}
         <ScrollArea className="flex-1 py-4 pr-3">
-          <div className="space-y-2">{sidebarItems.map((item) => renderSidebarItem(item))}</div>
+          <div className="space-y-2">{injectedItems.map((item) => renderSidebarItem(item))}</div>
         </ScrollArea>
 
         {/* Footer */}
